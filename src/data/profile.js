@@ -34,9 +34,15 @@ export const identity = {
 
   // La photo de profil. Le MÊME fichier sert deux fois : affiché dans le
   // sommaire, et converti en caractères par la commande `portrait` du
-  // terminal (src/js/ascii.js). Dépose ton image ici et tout suit.
+  // terminal (src/js/ascii.js).
+  //
+  // L'extension doit correspondre au contenu réel du fichier : un JPEG nommé
+  // .png fonctionne dans la plupart des navigateurs (ils reniflent le type),
+  // mais pas partout, et jamais chez un hébergeur qui renvoie
+  // `X-Content-Type-Options: nosniff`. Ici c'est un JPEG, donc `.jpg`.
+  //
   // Absent → le sommaire garde le monogramme « ~/ » et `neofetch` sa vignette.
-  avatar: '/avatar.png',
+  avatar: '/avatar.jpg',
 
   links: [
     { label: 'GitHub', url: 'https://github.com/patrickchoumi', handle: '@patrickchoumi' },

@@ -241,7 +241,9 @@ export const COMMANDS = {
     // converti en caractères depuis le même fichier que celui du sommaire :
     // une seule source, deux rendus — le principe du site, appliqué au visage.
     run: async (args, ctx) => {
-      const art = (await ctx.ascii(28)) || FALLBACK_ART;
+      // Le dessin prend la moitié gauche, la fiche tient dans le reste : on
+      // laisse toujours de quoi écrire « Role: … » à droite.
+      const art = (await ctx.ascii(Math.max(24, Math.min(52, ctx.columns() - 40)))) || FALLBACK_ART;
       const info = [
         [`${identity.handle}@${host}`, ''],
         ['─'.repeat(26), ''],
@@ -275,18 +277,32 @@ export const COMMANDS = {
   portrait: {
     usage: { fr: 'affiche la photo de profil en caractères', en: 'render the profile picture as characters' },
     run: async (args, ctx) => {
-      // La largeur suit celle du terminal : le portrait remplit ce qu'on lui
-      // donne, sans jamais déborder.
-      const cols = Math.min(72, Math.max(20, Number(args[0]) || ctx.columns()));
-      const art = await ctx.ascii(cols);
+      // Sans argument, le portrait est cadré pour tenir dans la fenêtre du
+      // terminal : on le voit en entier, sans faire défiler. Avec un argument
+      // (`portrait 90`), on demande explicitement plus de détail, quitte à
+      // devoir dérouler.
+      const asked = Number(args[0]);
+      const cols = Math.min(120, Math.max(20, asked || ctx.columns()));
+      const art = await ctx.ascii(cols, asked ? {} : { maxRows: ctx.rows() - 2 });
       if (!art) {
+        // Le chemin vient des données : le message ne peut pas mentir sur
+        // l'endroit où déposer le fichier.
+        const where = `public${identity.avatar || '/avatar.png'}`;
         return [
           dim(ctx.lang === 'en'
-            ? 'No picture yet. Drop one at public/avatar.png and reload.'
-            : 'Pas encore de photo. Dépose-la dans public/avatar.png et recharge.')
+            ? `No picture yet. Drop one at ${where} and reload.`
+            : `Pas encore de photo. Dépose-la dans ${where} et recharge.`)
         ];
       }
-      return art.map((l) => html(`<span class="art">${escapeHtml(l)}</span>`));
+      const out = art.map((l) => html(`<span class="art">${escapeHtml(l)}</span>`));
+      // Le cadrage automatique privilégie la vue d'ensemble ; on dit comment
+      // en demander plus, sinon personne ne devine que l'argument existe.
+      if (!asked) {
+        out.push(dim(ctx.lang === 'en'
+          ? '`portrait 90` for a larger, more detailed one.'
+          : '`portrait 90` pour une version plus grande et plus détaillée.'));
+      }
+      return out;
     }
   },
 

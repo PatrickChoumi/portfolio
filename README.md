@@ -33,9 +33,13 @@ la met en pratique sous les yeux du visiteur :
 
 C'est le principe du site appliqué au visage : **une seule image, deux rendus.**
 
-Dans le sommaire, la photo de profil est affichée en duotone — désaturée puis
-teintée à l'accent, inversée en thème sombre. Dans le terminal, `portrait`
-convertit **le même fichier** en tableau de caractères, à la volée :
+Dans le sommaire, la photo de profil est affichée telle qu'elle est. Une
+version « duotone » a été tentée — teintée à l'accent et inversée en thème
+sombre pour que le fond blanc ne troue pas la colonne : le portrait sortait en
+négatif, méconnaissable. Sur un avatar, l'identité prime sur la palette.
+
+Dans le terminal, `portrait` convertit **le même fichier** en tableau de
+caractères, à la volée :
 
 ![Le portrait dans neofetch](docs/captures/portrait-neofetch.png)
 
@@ -49,21 +53,41 @@ dépendance. N'importe quel format que le navigateur sait lire fonctionne
 (png, jpg, webp, avif), la largeur suit celle du terminal, et le résultat est
 mis en cache.
 
-Un détail qui a demandé un essai raté : **les caractères jouent l'encre, pas
-la lumière.** Inverser la rampe selon le thème paraissait logique — sur fond
-sombre, les pixels clairs denses. Sur un dessin au trait, dont le fond est
-blanc, cela remplit tout le cadre de `@` et le visage disparaît. Un trait
-reste un trait, quel que soit le fond : les pixels sombres sont denses, dans
-les deux thèmes.
+Trois pièges ont demandé un essai raté avant de tomber juste.
+
+**Les caractères jouent l'encre, pas la lumière.** Inverser la rampe selon le
+thème paraissait logique — sur fond sombre, les pixels clairs denses. Sur un
+dessin au trait, dont le fond est blanc, cela remplit tout le cadre de `@` et
+le visage disparaît. Un trait reste un trait, quel que soit le fond.
+
+**Une moyenne efface les traits.** Réduire directement une image à une grille
+de caractères moyenne chaque cellule : un trait noir d'un pixel au milieu de
+blanc devient un gris presque invisible. On dessine donc à quatre fois la
+résolution cible, puis chaque cellule mélange sa moyenne et son pixel le plus
+sombre. Ensuite les niveaux sont recalés sur la plage réellement présente, et
+une courbe en puissance rend les demi-tons au papier — sans elle, une
+chevelure hachurée sort en bloc plein et avale le visage.
+
+**JetBrains Mono ligature `==`, `--`, `=+`.** Dans un terminal c'est déjà
+discutable sur des chemins ; sur un dessin en caractères c'est fatal — les
+fusions disloquent la grille et le portrait devient une bouillie de traits.
+Le terminal coupe donc les ligatures (`font-variant-ligatures: none`).
+
+Sans argument, `portrait` cadre le dessin pour qu'il tienne dans la fenêtre du
+terminal. `portrait 90` en demande une version plus grande, quitte à dérouler.
 
 ### Mettre ta photo
 
-Dépose ton image dans **`public/avatar.png`**. C'est tout — rien à compiler,
-rien à configurer. Le chemin est déclaré une fois dans `src/data/profile.js`
-(`identity.avatar`) si tu veux un autre nom ou un autre format.
+Dépose ton image dans **`public/`** et donne son chemin à `identity.avatar`
+(`src/data/profile.js`). C'est tout — rien à compiler, rien à configurer.
+
+L'extension doit correspondre au contenu réel du fichier. Un JPEG nommé `.png`
+s'affiche dans la plupart des navigateurs, qui reniflent le type — mais pas
+partout, et jamais chez un hébergeur qui renvoie `X-Content-Type-Options:
+nosniff`.
 
 Sans fichier, tout se dégrade proprement : le sommaire garde le monogramme
-`~/`, `neofetch` sa vignette, et `portrait` explique quoi faire.
+`~/`, `neofetch` sa vignette, et `portrait` indique le chemin attendu.
 
 ## Le parti pris visuel
 

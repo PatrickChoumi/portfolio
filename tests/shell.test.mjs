@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 
 import { tokenize, parseLine, COMMANDS, nearestCommand, colorize } from '../src/js/commands.js';
 import { buildFs } from '../src/data/fs.js';
+import { identity } from '../src/data/profile.js';
 import { pick } from '../src/data/lang.js';
 
 // Contexte minimal — enregistre les effets au lieu de les produire.
@@ -33,6 +34,7 @@ function makeCtx(cwd = []) {
     theme: () => effects.theme,
     uptime: () => '3s',
     columns: () => 40,
+    rows: () => 24,
     // Aucune photo dans un contexte de test : les commandes qui en dépendent
     // doivent se rabattre proprement. Le rendu réel d'une image se vérifie
     // dans le navigateur (tests-e2e/browser.mjs).
@@ -180,10 +182,12 @@ test('neofetch se rabat sur sa vignette quand aucune photo n’est déposée', a
   assert.match(out, /▄▄▄/, 'vignette de secours absente');
 });
 
-test('portrait explique quoi faire quand il n’y a pas d’image', async () => {
+test('portrait indique le chemin réel quand il n’y a pas d’image', async () => {
   const out = await COMMANDS.portrait.run([], makeCtx());
   assert.equal(out[0].cls, 'is-dim');
-  assert.match(text(out), /avatar\.png/);
+  // Le message doit pointer le chemin configuré, pas un chemin écrit en dur :
+  // renommer le fichier sans mettre le message à jour serait un piège.
+  assert.match(text(out), new RegExp(`public${identity.avatar.replace('.', '\\.')}`));
 });
 
 test('les easter eggs répondent sans casser', () => {

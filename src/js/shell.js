@@ -66,34 +66,54 @@ export function initShell(hooks) {
     history: () => history.slice(),
     theme: () => document.documentElement.getAttribute('data-theme') || 'light',
 
-    // Largeur utile de l'écran, en caractères — mesurée sur une vraie glyphe
-    // plutôt que devinée, puisque la police peut ne pas être encore chargée.
+    // Largeur utile de l'écran, en caractères.
     columns: () => {
-      const probe = document.createElement('span');
-      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:inherit';
-      probe.textContent = '0'.repeat(80);
-      el.screen.appendChild(probe);
-      const chW = probe.getBoundingClientRect().width / 80;
-      probe.remove();
-      const usable = el.screen.clientWidth - 40;
-      return Math.max(20, Math.floor(usable / (chW || 8)));
+      const { charWidth } = metrics();
+      return Math.max(20, Math.floor((el.screen.clientWidth - 40) / charWidth));
     },
 
     // Le portrait en caractères. Renvoie null si aucune image n'est déposée :
     // l'appelant retombe alors sur son rendu de secours.
-    ascii: async (cols) => {
+    ascii: async (cols, opts = {}) => {
       if (!identity.avatar) return null;
       try {
-        return await imageToAscii(identity.avatar, cols);
+        return await imageToAscii(identity.avatar, cols, { charRatio: metrics().charRatio, ...opts });
       } catch {
         return null;
       }
+    },
+
+    // Nombre de lignes visibles sans faire défiler.
+    rows: () => {
+      const { lineHeight } = metrics();
+      return Math.max(6, Math.floor(el.screen.clientHeight / lineHeight));
     },
     uptime: () => {
       const s = Math.floor((Date.now() - started) / 1000);
       return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
     }
   };
+
+  // Mesure d'une vraie ligne de dessin : largeur d'un caractère et hauteur de
+  // ligne. Deviner ces valeurs déforme le portrait — un caractère n'est pas
+  // exactement deux fois plus haut que large, et l'interligne serré des lignes
+  // de dessin change encore le rapport. On mesure donc dans les conditions
+  // exactes du rendu, avec la même classe CSS.
+  function metrics() {
+    const probe = document.createElement('div');
+    probe.className = 'term-line';
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    probe.innerHTML = `<span class="art">${'0'.repeat(50)}</span>`;
+    el.screen.appendChild(probe);
+    const charWidth = probe.querySelector('.art').getBoundingClientRect().width / 50;
+    const lineHeight = probe.getBoundingClientRect().height;
+    probe.remove();
+    return {
+      charWidth: charWidth || 8.4,
+      lineHeight: lineHeight || 15,
+      charRatio: charWidth ? lineHeight / charWidth : 2
+    };
+  }
 
   // ─── Sortie ─────────────────────────────────────────────────────────
   function push(lineObj) {
@@ -107,7 +127,20 @@ export function initShell(hooks) {
     while (el.screen.childElementCount > MAX_LINES) el.screen.firstElementChild.remove();
   }
 
-  const write = (lines) => { lines.forEach(push); scrollDown(); };
+  // Une sortie plus haute que l'écran est cadrée sur son DÉBUT, pas sur sa
+  // fin : un portrait de cinquante lignes dont on ne verrait que le menton
+  // n'apprend rien. Les sorties courtes gardent le comportement d'un shell —
+  // on suit le bas.
+  function write(lines) {
+    const first = el.screen.lastElementChild;
+    lines.forEach(push);
+    const added = first ? first.nextElementSibling : el.screen.firstElementChild;
+    if (added && el.screen.scrollHeight - added.offsetTop > el.screen.clientHeight) {
+      el.screen.scrollTop = added.offsetTop - el.screen.offsetTop;
+    } else {
+      scrollDown();
+    }
+  }
   const scrollDown = () => { el.screen.scrollTop = el.screen.scrollHeight; };
 
   function promptHtml() {

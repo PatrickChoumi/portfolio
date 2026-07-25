@@ -328,30 +328,29 @@ kbd {
 /* ─────────────────────────────────────────────
    3bis. LE PORTRAIT
    ───────────────────────────────────────────── */
-/* La photo de profil, traitée en duotone pour entrer dans la palette : le
-   fichier est un trait noir et blanc, on le désature puis on le teinte à
-   l'accent. En thème sombre, on l'inverse d'abord — sinon le blanc du papier
-   troue la colonne.
-   Le MÊME fichier est rendu en caractères par la commande `portrait` du
-   terminal : une source, deux rendus, comme le reste du site. */
+/* La photo de profil, affichée telle qu'elle est.
+   Une version « duotone » a été tentée — désaturée, teintée à l'accent, et
+   INVERSÉE en thème sombre pour que le fond blanc ne troue pas la colonne.
+   Résultat : le portrait apparaissait en négatif, méconnaissable. Sur un
+   avatar, l'identité prime sur la palette : aucun filtre, aucune inversion.
+   Le seul effet est un liseré d'accent au survol, pour dire que c'est
+   cliquable — cliquer l'ouvre en caractères dans le terminal. */
 .avatar {
   display: block;
-  width: 46px; height: 46px;
+  width: 52px; height: 52px;
   margin-bottom: var(--space-4);
-  padding: 0; border: none; background: none;
+  padding: 0; background: none;
+  border: 1px solid var(--rule);
   cursor: pointer;
   line-height: 0;
+  transition: border-color var(--t);
 }
 .avatar img {
   width: 100%; height: 100%;
   object-fit: cover;
-  object-position: center 22%;
-  filter: grayscale(1) contrast(1.15);
-  transition: filter var(--t), opacity var(--t);
+  display: block;
 }
-[data-theme="dark"] .avatar img { filter: grayscale(1) contrast(1.15) invert(1); }
-.avatar:hover img { filter: grayscale(1) contrast(1.3) sepia(1) hue-rotate(190deg) saturate(3.2); }
-[data-theme="dark"] .avatar:hover img { filter: grayscale(1) contrast(1.3) invert(1) sepia(1) hue-rotate(190deg) saturate(2.4); }
+.avatar:hover, .avatar:focus-visible { border-color: var(--accent); }
 /* Tant qu'aucun fichier n'est déposé, le bouton n'occupe pas d'espace. */
 .avatar[hidden] { display: none; }
 
@@ -781,7 +780,7 @@ main { margin-left: var(--nav-w); padding-bottom: var(--status-h); }
 .term {
   position: fixed;
   left: var(--nav-w); right: 0; bottom: var(--status-h);
-  height: min(50vh, 440px);
+  height: min(56vh, 520px);
   z-index: 60;
   display: flex;
   flex-direction: column;
@@ -821,6 +820,12 @@ main { margin-left: var(--nav-w); padding-bottom: var(--status-h); }
   font-size: var(--fs-mono);
   line-height: 1.65;
   scrollbar-width: thin;
+  /* JetBrains Mono ligature par défaut : « == », « -- », « =+ » fusionnent en
+     un seul glyphe. Dans un terminal c'est déjà discutable sur des chemins ;
+     sur un dessin en caractères c'est fatal — la grille se disloque et le
+     portrait devient une bouillie de traits. On les coupe partout ici. */
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
 }
 .term-screen::-webkit-scrollbar { width: 8px; }
 .term-screen::-webkit-scrollbar-thumb { background: var(--rule-strong); }
@@ -842,7 +847,7 @@ main { margin-left: var(--nav-w); padding-bottom: var(--status-h); }
 /* Le portrait en caractères : interligne resserré, sinon le dessin s'étire et
    le visage ne se lit plus. */
 .term-line .art { color: var(--accent); }
-.term-line:has(.art) { line-height: 1.05; letter-spacing: 0.02em; }
+.term-line:has(.art) { line-height: 1.05; letter-spacing: 0; }
 .term-line mark { background: var(--accent); color: var(--accent-fg); }
 
 .term-input-row {
@@ -862,6 +867,8 @@ main { margin-left: var(--nav-w); padding-bottom: var(--status-h); }
   font-family: var(--font-mono);
   font-size: var(--fs-mono);
   caret-color: var(--accent);
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
 }
 
 /* ─────────────────────────────────────────────
