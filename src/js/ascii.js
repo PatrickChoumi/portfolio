@@ -9,7 +9,12 @@
 //  aucune étape de build, aucun décodeur d'image à écrire, aucune dépendance,
 //  et n'importe quel format lisible par le navigateur fonctionne.
 //
-//  Trois décisions ont été prises après un premier rendu illisible :
+//  L'OBJECTIF EST LA RESSEMBLANCE. Pas la lisibilité du visage, pas la
+//  finesse du trait : que le tableau de caractères évoque immédiatement
+//  l'image d'origine. C'est ce critère qui a tranché chacun des choix
+//  ci-dessous, et il n'est pas toujours celui qu'on croit — un rendu plus
+//  clair montre mieux les traits, mais ressemble à un croquis là où la
+//  planche source est une masse dense.
 //
 //  1. LES CARACTÈRES JOUENT L'ENCRE, PAS LA LUMIÈRE. Les pixels sombres sont
 //     denses, les clairs sont vides — dans les deux thèmes. Inverser la rampe
@@ -21,18 +26,16 @@
 //     moyenne de chaque cellule : un trait noir d'un pixel au milieu de blanc
 //     devient un gris très clair, et le dessin s'efface. On dessine donc à
 //     plusieurs fois la résolution cible, puis chaque cellule mélange sa
-//     moyenne et son pixel le plus sombre. Les traits survivent, les aplats
-//     gardent leur valeur.
+//     moyenne et son pixel le plus sombre. Les traits survivent, et les
+//     aplats hachurés gardent la densité qu'ils ont à l'œil.
 //
 //  3. LES NIVEAUX SONT RECALÉS SUR L'IMAGE. Plutôt qu'un contraste fixe, on
 //     étale la plage réellement présente (2e au 98e centile) sur toute la
-//     rampe. Une image terne comme une image contrastée sortent lisibles.
+//     rampe. Une image terne comme une image contrastée s'en sortent.
 //
-//  4. LES DEMI-TONS SONT REPOUSSÉS VERS LE PAPIER. Une trame de manga —
-//     hachures serrées — a beau se lire gris clair à l'œil, sa moyenne est
-//     franchement sombre : sans correction, une chevelure sort en bloc plein
-//     et avale le visage. Une courbe en puissance rend ces aplats au papier
-//     et ne garde dense que l'encre franche.
+//  4. LA COURBE FINALE DOSE LA DENSITÉ. Elle décide de la quantité d'encre
+//     du dessin — c'est le réglage le plus sensible, et celui qui fait qu'on
+//     reconnaît la photo ou non. Voir INK_BIAS et GAMMA plus bas.
 //
 //  (Détail voisin, réglé côté CSS : JetBrains Mono ligature « == », « -- »,
 //  « =+ ». Sur un dessin en caractères, ces fusions disloquent la grille — le
@@ -50,16 +53,30 @@ const RAMP = ' .:-=+*#%@';
 // SUPER×SUPER pixels. Au-delà de 4, le gain devient invisible.
 const SUPER = 4;
 
+// ─── Les deux réglages qui décident du rendu ──────────────────────────
+//
+// Ils ont été arrêtés en comparant plusieurs rendus à l'image source, et le
+// critère retenu est la RESSEMBLANCE, pas la lisibilité du visage. Ce sont
+// deux choses différentes, et il faut choisir :
+//
+//   • des valeurs plus basses donnent un dessin clair, aéré, où l'on
+//     distingue mieux les traits — mais qui ressemble à un croquis léger,
+//     alors que la planche source est une masse dense de hachures ;
+//   • les valeurs ci-dessous rendent cette densité. Le dessin est plus
+//     chargé, et c'est précisément ce qui le fait reconnaître.
+//
+// Elles vont de pair avec PORTRAIT_COLS (src/js/commands.js) : le rendu a été
+// jugé à cette largeur-là. Changer l'un sans l'autre casse l'équilibre.
+
 // Part du pixel le plus sombre dans la valeur d'une cellule. À 0 on obtient
 // une moyenne pure — les traits d'un pixel s'effacent. À 1, le moindre point
-// noir noircit toute la cellule et les aplats hachurés se bouchent. Réglé à
-// l'œil sur une vraie planche de manga.
-const INK_BIAS = 0.32;
+// noir noircit toute la cellule.
+const INK_BIAS = 0.55;
 
 // Courbe appliquée après le recalage des niveaux. En dessous de 1, elle
-// repousse les demi-tons vers le papier. Sans elle, une chevelure hachurée —
-// qui se lit gris clair à l'œil — sort en bloc uniforme et avale le visage.
-const GAMMA = 0.28;
+// repousse les demi-tons vers le papier ; plus on descend, plus le dessin
+// s'éclaircit.
+const GAMMA = 0.6;
 
 // Rapport hauteur/largeur d'un caractère. Sert de repli : l'appelant mesure
 // normalement la vraie valeur sur le terminal et la passe en option.

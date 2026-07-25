@@ -54,7 +54,11 @@ la demande : aucune étape de build, aucun décodeur d'image à écrire, aucune
 dépendance. N'importe quel format que le navigateur sait lire fonctionne
 (png, jpg, webp, avif), et le résultat est mis en cache.
 
-Trois pièges ont demandé un essai raté avant de tomber juste.
+**Le critère est la ressemblance**, pas la lisibilité du visage. Ce sont deux
+choses différentes, et il faut choisir : un rendu clair et aéré montre mieux
+les traits, mais évoque un croquis léger là où la planche source est une masse
+dense de hachures. C'est ce critère qui a tranché chacun des points suivants,
+et il n'a pas toujours donné la réponse attendue.
 
 **Les caractères jouent l'encre, pas la lumière.** Inverser la rampe selon le
 thème paraissait logique — sur fond sombre, les pixels clairs denses. Sur un
@@ -65,20 +69,21 @@ le visage disparaît. Un trait reste un trait, quel que soit le fond.
 de caractères moyenne chaque cellule : un trait noir d'un pixel au milieu de
 blanc devient un gris presque invisible. On dessine donc à quatre fois la
 résolution cible, puis chaque cellule mélange sa moyenne et son pixel le plus
-sombre. Ensuite les niveaux sont recalés sur la plage réellement présente, et
-une courbe en puissance rend les demi-tons au papier — sans elle, une
-chevelure hachurée sort en bloc plein et avale le visage.
+sombre. Les niveaux sont ensuite recalés sur la plage réellement présente, et
+une courbe en puissance dose la quantité d'encre finale — c'est le réglage le
+plus sensible, celui qui fait qu'on reconnaît la photo ou non.
 
 **JetBrains Mono ligature `==`, `--`, `=+`.** Dans un terminal c'est déjà
 discutable sur des chemins ; sur un dessin en caractères c'est fatal — les
 fusions disloquent la grille et le portrait devient une bouillie de traits.
 Le terminal coupe donc les ligatures (`font-variant-ligatures: none`).
 
-**La taille n'est pas libre.** Les réglages ci-dessus ont été calibrés à l'œil
-sur une largeur précise — 52 colonnes. Plus large, le dessin s'éclaircit et se
-dilue en bruit ; plus étroit, il sature. `portrait` et `neofetch` s'y tiennent
-donc tous les deux, pour que le portrait soit le même partout. `portrait 90`
-reste possible pour une version plus grande.
+**La taille fait partie du réglage.** Le rendu a été jugé à une largeur
+précise — 52 colonnes. `portrait` et `neofetch` s'y tiennent tous les deux,
+pour que le portrait soit le même partout ; changer l'un des deux réglages
+sans l'autre casse l'équilibre. `portrait 90` reste possible pour une version
+plus grande, et la largeur du terminal reste la limite : sur un téléphone, le
+dessin s'adapte plutôt que de déborder.
 
 ### Mettre ta photo
 
