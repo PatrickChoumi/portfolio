@@ -83,19 +83,10 @@ export function loadImage(url) {
 // Renvoie un tableau de lignes de texte, de `cols` caractères de large.
 // `charRatio` : hauteur d'un caractère divisée par sa largeur, à l'écran.
 export async function imageToAscii(url, cols = 40, {
-  charRatio = DEFAULT_CHAR_RATIO, inkBias = INK_BIAS, gamma = GAMMA, maxRows = 0
+  charRatio = DEFAULT_CHAR_RATIO, inkBias = INK_BIAS, gamma = GAMMA
 } = {}) {
   const img = await loadImage(url);
-  const aspect = img.naturalHeight / img.naturalWidth;
-
-  let rows = Math.max(1, Math.round((cols * aspect) / charRatio));
-  // Un portrait plus haut que la fenêtre oblige à faire défiler pour le voir
-  // en entier : on préfère le rétrécir jusqu'à ce qu'il tienne d'un coup
-  // d'œil. Une largeur explicite (`portrait 90`) passe outre.
-  if (maxRows && rows > maxRows) {
-    rows = maxRows;
-    cols = Math.max(12, Math.round((rows * charRatio) / aspect));
-  }
+  const rows = Math.max(1, Math.round((cols * img.naturalHeight / img.naturalWidth) / charRatio));
 
   const key = `${url}|${cols}×${rows}|${charRatio.toFixed(2)}|${inkBias}|${gamma}`;
   if (cache.has(key)) return cache.get(key);

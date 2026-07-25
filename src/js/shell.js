@@ -83,11 +83,6 @@ export function initShell(hooks) {
       }
     },
 
-    // Nombre de lignes visibles sans faire défiler.
-    rows: () => {
-      const { lineHeight } = metrics();
-      return Math.max(6, Math.floor(el.screen.clientHeight / lineHeight));
-    },
     uptime: () => {
       const s = Math.floor((Date.now() - started) / 1000);
       return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;

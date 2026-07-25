@@ -72,6 +72,12 @@ export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Largeur de référence du portrait en caractères. Les réglages de
+// src/js/ascii.js ont été calibrés à l'œil sur cette taille : `portrait` et
+// `neofetch` s'y tiennent tous les deux, pour que le dessin soit le même
+// partout.
+const PORTRAIT_COLS = 52;
+
 // Vignette de secours : utilisée par `neofetch` tant qu'aucune photo n'est
 // déposée dans public/avatar.png.
 const FALLBACK_ART = [
@@ -243,7 +249,7 @@ export const COMMANDS = {
     run: async (args, ctx) => {
       // Le dessin prend la moitié gauche, la fiche tient dans le reste : on
       // laisse toujours de quoi écrire « Role: … » à droite.
-      const art = (await ctx.ascii(Math.max(24, Math.min(52, ctx.columns() - 40)))) || FALLBACK_ART;
+      const art = (await ctx.ascii(Math.max(24, Math.min(PORTRAIT_COLS, ctx.columns() - 40)))) || FALLBACK_ART;
       const info = [
         [`${identity.handle}@${host}`, ''],
         ['─'.repeat(26), ''],
@@ -277,13 +283,14 @@ export const COMMANDS = {
   portrait: {
     usage: { fr: 'affiche la photo de profil en caractères', en: 'render the profile picture as characters' },
     run: async (args, ctx) => {
-      // Sans argument, le portrait est cadré pour tenir dans la fenêtre du
-      // terminal : on le voit en entier, sans faire défiler. Avec un argument
-      // (`portrait 90`), on demande explicitement plus de détail, quitte à
-      // devoir dérouler.
+      // Cinquante-deux colonnes par défaut : c'est la taille sur laquelle le
+      // rendu a été calibré, et celle qui ressemble le plus à l'image. Plus
+      // large, le dessin s'éclaircit et se dilue ; plus étroit, il sature.
+      // La largeur du terminal reste la limite — sur un téléphone, le dessin
+      // s'adapte plutôt que de déborder.
       const asked = Number(args[0]);
-      const cols = Math.min(120, Math.max(20, asked || ctx.columns()));
-      const art = await ctx.ascii(cols, asked ? {} : { maxRows: ctx.rows() - 2 });
+      const cols = Math.min(120, Math.max(20, asked || Math.min(PORTRAIT_COLS, ctx.columns())));
+      const art = await ctx.ascii(cols);
       if (!art) {
         // Le chemin vient des données : le message ne peut pas mentir sur
         // l'endroit où déposer le fichier.
@@ -295,12 +302,12 @@ export const COMMANDS = {
         ];
       }
       const out = art.map((l) => html(`<span class="art">${escapeHtml(l)}</span>`));
-      // Le cadrage automatique privilégie la vue d'ensemble ; on dit comment
-      // en demander plus, sinon personne ne devine que l'argument existe.
+      // On dit comment demander plus grand, sinon personne ne devine que
+      // l'argument existe.
       if (!asked) {
         out.push(dim(ctx.lang === 'en'
-          ? '`portrait 90` for a larger, more detailed one.'
-          : '`portrait 90` pour une version plus grande et plus détaillée.'));
+          ? '`portrait 90` for a larger one.'
+          : '`portrait 90` pour une version plus grande.'));
       }
       return out;
     }

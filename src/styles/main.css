@@ -16,7 +16,9 @@
    2. AUCUNE BOÎTE. Ni carte, ni ombre, ni coin arrondi, ni
       badge, ni pastille. La seule ligne autorisée est un filet
       d'un pixel entre deux rangées. La structure vient du
-      blanc et de l'alignement.
+      blanc et de l'alignement. Deux exceptions, toutes deux
+      rondes et toutes deux porteuses de sens : la pastille de
+      disponibilité, et le médaillon de la photo de profil.
    3. UN SEUL ACCENT, RARE. Un bleu — celui des dossiers dans un
       `ls`. Il marque la page courante, le curseur, l'invite du
       shell et le mot souligné du titre. Nulle part ailleurs.
@@ -333,14 +335,20 @@ kbd {
    INVERSÉE en thème sombre pour que le fond blanc ne troue pas la colonne.
    Résultat : le portrait apparaissait en négatif, méconnaissable. Sur un
    avatar, l'identité prime sur la palette : aucun filtre, aucune inversion.
-   Le seul effet est un liseré d'accent au survol, pour dire que c'est
-   cliquable — cliquer l'ouvre en caractères dans le terminal. */
+
+   Le cercle est la seule entorse à la règle « aucun coin arrondi » du reste
+   du site. Elle se défend : un avatar rond est une convention universelle,
+   et la forme distingue immédiatement une personne d'un élément d'interface.
+   L'image est légèrement agrandie et recentrée sur le visage — dans un
+   médaillon de cinquante pixels, cadrer la planche entière ne montre rien. */
 .avatar {
   display: block;
-  width: 52px; height: 52px;
+  width: 54px; height: 54px;
   margin-bottom: var(--space-4);
   padding: 0; background: none;
   border: 1px solid var(--rule);
+  border-radius: 50%;
+  overflow: hidden;
   cursor: pointer;
   line-height: 0;
   transition: border-color var(--t);
@@ -349,6 +357,8 @@ kbd {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  transform: scale(1.35);
+  transform-origin: 56% 30%;
 }
 .avatar:hover, .avatar:focus-visible { border-color: var(--accent); }
 /* Tant qu'aucun fichier n'est déposé, le bouton n'occupe pas d'espace. */

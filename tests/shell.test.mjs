@@ -33,8 +33,7 @@ function makeCtx(cwd = []) {
     history: () => ['ls', 'cat about.md'],
     theme: () => effects.theme,
     uptime: () => '3s',
-    columns: () => 40,
-    rows: () => 24,
+    columns: () => 60,
     // Aucune photo dans un contexte de test : les commandes qui en dépendent
     // doivent se rabattre proprement. Le rendu réel d'une image se vérifie
     // dans le navigateur (tests-e2e/browser.mjs).

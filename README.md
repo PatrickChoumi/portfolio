@@ -33,10 +33,12 @@ la met en pratique sous les yeux du visiteur :
 
 C'est le principe du site appliqué au visage : **une seule image, deux rendus.**
 
-Dans le sommaire, la photo de profil est affichée telle qu'elle est. Une
-version « duotone » a été tentée — teintée à l'accent et inversée en thème
-sombre pour que le fond blanc ne troue pas la colonne : le portrait sortait en
-négatif, méconnaissable. Sur un avatar, l'identité prime sur la palette.
+Dans le sommaire, la photo de profil est affichée telle qu'elle est, dans un
+médaillon rond légèrement recentré sur le visage — à cinquante pixels, cadrer
+la planche entière ne montre rien. Une version « duotone » a été tentée —
+teintée à l'accent et inversée en thème sombre pour que le fond blanc ne troue
+pas la colonne : le portrait sortait en négatif, méconnaissable. Sur un avatar,
+l'identité prime sur la palette.
 
 Dans le terminal, `portrait` convertit **le même fichier** en tableau de
 caractères, à la volée :
@@ -50,8 +52,7 @@ dans le sommaire ouvre le terminal dessus.
 La conversion (`src/js/ascii.js`) se fait dans le navigateur, au moment où on
 la demande : aucune étape de build, aucun décodeur d'image à écrire, aucune
 dépendance. N'importe quel format que le navigateur sait lire fonctionne
-(png, jpg, webp, avif), la largeur suit celle du terminal, et le résultat est
-mis en cache.
+(png, jpg, webp, avif), et le résultat est mis en cache.
 
 Trois pièges ont demandé un essai raté avant de tomber juste.
 
@@ -73,8 +74,11 @@ discutable sur des chemins ; sur un dessin en caractères c'est fatal — les
 fusions disloquent la grille et le portrait devient une bouillie de traits.
 Le terminal coupe donc les ligatures (`font-variant-ligatures: none`).
 
-Sans argument, `portrait` cadre le dessin pour qu'il tienne dans la fenêtre du
-terminal. `portrait 90` en demande une version plus grande, quitte à dérouler.
+**La taille n'est pas libre.** Les réglages ci-dessus ont été calibrés à l'œil
+sur une largeur précise — 52 colonnes. Plus large, le dessin s'éclaircit et se
+dilue en bruit ; plus étroit, il sature. `portrait` et `neofetch` s'y tiennent
+donc tous les deux, pour que le portrait soit le même partout. `portrait 90`
+reste possible pour une version plus grande.
 
 ### Mettre ta photo
 
@@ -102,7 +106,10 @@ revue, alors que le sujet est un poste de travail.
 
 **2. Aucune boîte.** Ni carte, ni ombre, ni coin arrondi, ni badge, ni
 pastille. La seule ligne autorisée est un filet d'un pixel entre deux rangées.
-La structure vient du blanc et de l'alignement.
+La structure vient du blanc et de l'alignement. Deux exceptions, toutes deux
+rondes et toutes deux porteuses de sens : la pastille de disponibilité, et le
+médaillon de la photo de profil — un avatar rond est une convention qui
+distingue immédiatement une personne d'un élément d'interface.
 
 **3. Un seul accent, rare.** Un bleu — celui des dossiers dans un `ls`. Il
 marque la page courante, le curseur, l'invite du shell et le mot souligné du
