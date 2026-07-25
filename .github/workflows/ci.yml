@@ -1,0 +1,41 @@
+# CI — sans elle, les 46 tests unitaires et les 18 vérifications navigateur
+# ne tournent jamais automatiquement, et une garantie qui ne s'exécute pas
+# s'érode en silence. Ici, un commit qui casse un test, l'audit de contenu,
+# le build, ou qui fait fuiter une requête vers un hôte tiers, fait échouer
+# la CI.
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Tests unitaires et audit de contenu
+        run: npm test
+
+      - name: Build de production
+        run: npm run build
+
+      # `playwright-core` fournit son propre CLI : on l'utilise plutôt que
+      # `npx playwright`, qui téléchargerait un autre paquet dont la révision
+      # de navigateur ne correspondrait pas forcément à la nôtre.
+      - name: Installer Chromium
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Harnais navigateur
+        run: node tests-e2e/browser.mjs
