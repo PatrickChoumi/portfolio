@@ -31,6 +31,13 @@ export const identity = {
     closed: { fr: 'Indisponible actuellement', en: 'Not available right now' }
   },
   email: 'patrickchoumi@gmail.com',
+
+  // La photo de profil. Le MÊME fichier sert deux fois : affiché dans le
+  // sommaire, et converti en caractères par la commande `portrait` du
+  // terminal (src/js/ascii.js). Dépose ton image ici et tout suit.
+  // Absent → le sommaire garde le monogramme « ~/ » et `neofetch` sa vignette.
+  avatar: '/avatar.png',
+
   links: [
     { label: 'GitHub', url: 'https://github.com/patrickchoumi', handle: '@patrickchoumi' },
     { label: 'LinkedIn', url: 'https://www.linkedin.com/in/patrickchoumi', handle: '/in/patrickchoumi' },

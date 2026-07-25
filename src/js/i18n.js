@@ -32,6 +32,10 @@ const DICT = {
     'projects.lede': 'Quatre choses construites, décrites par ce qu’elles résolvent plutôt que par la liste des technologies employées.',
     'projects.back': 'Tous les projets',
     'hint.term': 'Ce site s’explore aussi au terminal',
+    'status.terminal': 'terminal',
+    'status.hint': '` terminal · ⌘K palette · ⇧? aide',
+    'status.read': 'LIRE',
+    'aria.avatar': 'Afficher le portrait en caractères',
     'term.hint': 'tape « help »',
     'palette.placeholder': 'Aller à… ou taper une commande',
     'palette.empty': 'Aucun résultat',
@@ -83,6 +87,10 @@ const DICT = {
     'projects.lede': 'Four things built, described by what they solve rather than by the list of technologies involved.',
     'projects.back': 'All projects',
     'hint.term': 'This site can also be explored in a terminal',
+    'status.terminal': 'terminal',
+    'status.hint': '` terminal · ⌘K palette · ⇧? help',
+    'status.read': 'READ',
+    'aria.avatar': 'Show the portrait as characters',
     'term.hint': 'type “help”',
     'palette.placeholder': 'Go to… or type a command',
     'palette.empty': 'No results',
@@ -145,7 +153,10 @@ export function applyLang(lang) {
   // Les quatre boutons du pied de sommaire n'ont qu'un glyphe pour libellé :
   // leur `aria-label` est donc leur seul nom accessible, et il doit suivre la
   // langue comme le reste.
-  const ARIA = { 'btn-search': 'aria.palette', 'btn-lang': 'aria.lang', 'btn-theme': 'aria.theme', 'btn-term': 'aria.term' };
+  const ARIA = {
+    'btn-search': 'aria.palette', 'btn-lang': 'aria.lang',
+    'btn-theme': 'aria.theme', 'btn-term': 'aria.term', 'avatar': 'aria.avatar'
+  };
   for (const [id, key] of Object.entries(ARIA)) {
     document.getElementById(id)?.setAttribute('aria-label', t(key));
   }

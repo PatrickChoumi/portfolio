@@ -4,11 +4,11 @@
 //
 //   JetBrains Mono 400/500  l'ossature — titres, navigation, terminal,
 //                           chiffres, tout ce qui structure ;
-//   Newsreader 400 + italique  la prose — tout ce qui se lit longuement.
+//   Inter 400/500            la prose — tout ce qui se lit en paragraphes.
 //
-// Le contraste est volontaire : la charpente ressemble à un éditeur de code,
-// le texte à un livre. C'est ce qui rend l'ensemble lisible plutôt
-// qu'intimidant — un site entièrement monospace met le lecteur au travail.
+// Deux voix de la même famille d'esprit : l'une tape, l'autre explique. Un
+// serif éditorial a été essayé ici, et retiré — il donnait au site l'air d'une
+// revue, alors que le sujet est un poste de travail.
 //
 // Sous-ensemble latin uniquement, sans latin-ext : le français y est
 // entièrement couvert (accents, œ, guillemets), et cela divise le poids par
@@ -36,7 +36,7 @@ const CSS_OUT = path.resolve('src/styles/fonts.css');
 
 const FAMILIES = [
   { name: 'JetBrains Mono', query: 'JetBrains+Mono:wght@400;500', slug: 'jetbrains-mono' },
-  { name: 'Newsreader', query: 'Newsreader:ital,wght@0,400;1,400', slug: 'newsreader' }
+  { name: 'Inter', query: 'Inter:wght@400;500', slug: 'inter' }
 ];
 
 // Sans user-agent de navigateur moderne, Google renvoie du TTF au lieu du woff2.
@@ -104,7 +104,7 @@ async function main() {
   const header = [
     '/* Généré par scripts/fetch-fonts.mjs — ne pas éditer à la main.',
     '   Polices auto-hébergées : aucune requête vers un tiers au chargement.',
-    '   JetBrains Mono et Newsreader — SIL Open Font License 1.1. */',
+    '   JetBrains Mono et Inter — SIL Open Font License 1.1. */',
     ''
   ].join('\n');
   await writeFile(CSS_OUT, `${header}${faces.join('\n\n')}\n`);

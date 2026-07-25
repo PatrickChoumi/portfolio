@@ -72,6 +72,18 @@ export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Vignette de secours : utilisée par `neofetch` tant qu'aucune photo n'est
+// déposée dans public/avatar.png.
+const FALLBACK_ART = [
+  '   ▄▄▄▄▄▄▄▄▄▄▄   ',
+  '  █ ▄▄▄▄▄▄▄▄▄ █  ',
+  '  █ █  ~/   █ █  ',
+  '  █ █  ▸_   █ █  ',
+  '  █ █▄▄▄▄▄▄▄█ █  ',
+  '  █▄▄▄▄▄▄▄▄▄▄▄█  ',
+  '   ▀▀▀▀▀▀▀▀▀▀▀   '
+];
+
 // ─── Le registre ──────────────────────────────────────────────────────
 // `usage` alimente `help` ; `complete` alimente la touche Tab.
 export const COMMANDS = {
@@ -224,19 +236,15 @@ export const COMMANDS = {
 
   neofetch: {
     usage: { fr: 'la fiche machine', en: 'the machine card' },
-    run: (args, ctx) => {
-      const art = [
-        '   ▄▄▄▄▄▄▄▄▄▄▄   ',
-        '  █ ▄▄▄▄▄▄▄▄▄ █  ',
-        '  █ █  ~/   █ █  ',
-        '  █ █  ▸_   █ █  ',
-        '  █ █▄▄▄▄▄▄▄█ █  ',
-        '  █▄▄▄▄▄▄▄▄▄▄▄█  ',
-        '   ▀▀▀▀▀▀▀▀▀▀▀   '
-      ];
+    // Un vrai neofetch affiche le logo de la distribution à gauche et les
+    // informations à droite. Ici le « logo » est le portrait de l'auteur,
+    // converti en caractères depuis le même fichier que celui du sommaire :
+    // une seule source, deux rendus — le principe du site, appliqué au visage.
+    run: async (args, ctx) => {
+      const art = (await ctx.ascii(28)) || FALLBACK_ART;
       const info = [
         [`${identity.handle}@${host}`, ''],
-        ['─'.repeat(24), ''],
+        ['─'.repeat(26), ''],
         [ctx.lang === 'en' ? 'Role' : 'Rôle', ctx.tx(identity.role)],
         [ctx.lang === 'en' ? 'Location' : 'Lieu', ctx.tx(identity.location)],
         [ctx.lang === 'en' ? 'Projects' : 'Projets', String(projects.length)],
@@ -246,15 +254,39 @@ export const COMMANDS = {
         [ctx.lang === 'en' ? 'Theme' : 'Thème', ctx.theme()],
         [ctx.lang === 'en' ? 'Uptime' : 'Depuis', ctx.uptime()]
       ];
+      const width = Math.max(...art.map((l) => l.length));
       const rows = Math.max(art.length, info.length);
       const out = [];
+      // Les informations sont centrées verticalement sur le portrait : collées
+      // en haut, la fiche paraît bancale dès que le dessin est plus haut.
+      const offset = Math.max(0, Math.floor((art.length - info.length) / 2));
       for (let i = 0; i < rows; i++) {
-        const left = (art[i] || ' '.repeat(17));
-        const [k, v] = info[i] || ['', ''];
-        const right = v ? `<b>${escapeHtml(k)}</b>: ${escapeHtml(v)}` : `<b>${escapeHtml(k)}</b>`;
-        out.push(html(`<span class="p">${escapeHtml(left)}</span>  ${right}`));
+        const left = (art[i] || '').padEnd(width);
+        const entry = info[i - offset];
+        const right = entry
+          ? (entry[1] ? `<b>${escapeHtml(entry[0])}</b>: ${escapeHtml(entry[1])}` : `<b>${escapeHtml(entry[0])}</b>`)
+          : '';
+        out.push(html(`<span class="art">${escapeHtml(left)}</span>  ${right}`));
       }
       return out;
+    }
+  },
+
+  portrait: {
+    usage: { fr: 'affiche la photo de profil en caractères', en: 'render the profile picture as characters' },
+    run: async (args, ctx) => {
+      // La largeur suit celle du terminal : le portrait remplit ce qu'on lui
+      // donne, sans jamais déborder.
+      const cols = Math.min(72, Math.max(20, Number(args[0]) || ctx.columns()));
+      const art = await ctx.ascii(cols);
+      if (!art) {
+        return [
+          dim(ctx.lang === 'en'
+            ? 'No picture yet. Drop one at public/avatar.png and reload.'
+            : 'Pas encore de photo. Dépose-la dans public/avatar.png et recharge.')
+        ];
+      }
+      return art.map((l) => html(`<span class="art">${escapeHtml(l)}</span>`));
     }
   },
 

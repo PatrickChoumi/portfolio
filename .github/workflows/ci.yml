@@ -1,4 +1,4 @@
-# CI — sans elle, les 46 tests unitaires et les 19 vérifications navigateur
+# CI — sans elle, les 48 tests unitaires et les 24 vérifications navigateur
 # ne tournent jamais automatiquement, et une garantie qui ne s'exécute pas
 # s'érode en silence. Ici, un commit qui casse un test, l'audit de contenu,
 # le build, ou qui fait fuiter une requête vers un hôte tiers, fait échouer

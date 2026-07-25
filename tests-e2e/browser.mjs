@@ -14,6 +14,8 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import { testAvatar } from './make-png.mjs';
+
 const DIST = path.resolve('dist');
 const SHOTS = process.argv.includes('--shots');
 const SHOT_DIR = process.env.SHOT_DIR || path.resolve('.shots');
@@ -25,9 +27,17 @@ const MIME = {
 
 // Serveur statique minimal avec repli SPA — l'équivalent de ce que fait
 // n'importe quel hébergeur, sans dépendance supplémentaire.
+const TEST_AVATAR = testAvatar(128);
+
 function serve() {
   const server = createServer(async (req, res) => {
     const url = req.url.split('?')[0];
+    // Si aucune photo n'est déposée dans public/, on en sert une de synthèse :
+    // la conversion en caractères doit être vérifiée dans les deux cas.
+    if (url === '/avatar.png' && !existsSync(path.join(DIST, 'avatar.png'))) {
+      res.writeHead(200, { 'content-type': 'image/png' });
+      return res.end(TEST_AVATAR);
+    }
     let file = path.join(DIST, url === '/' ? 'index.html' : url);
     if (!path.extname(file) || !existsSync(file)) file = path.join(DIST, 'index.html');
     try {
@@ -104,13 +114,25 @@ async function main() {
     assert((await page.$$('.tree-item')).length >= 6, 'sommaire incomplet');
   });
 
-  // La page doit se lire seule. Ces éléments ont été retirés volontairement :
-  // s'ils réapparaissent, c'est que le chrome regagne du terrain.
-  await check('aucun chrome permanent n’est revenu', async () => {
-    for (const sel of ['.statusbar', '.buffer-tabs', '.gutter', '#boot']) {
+  // Ces éléments-là ont été retirés pour de bon : s'ils réapparaissent, c'est
+  // que le chrome regagne du terrain sur la lecture.
+  await check('le chrome retiré n’est pas revenu', async () => {
+    for (const sel of ['.buffer-tabs', '.gutter', '#boot']) {
       assert((await page.$$(sel)).length === 0, `${sel} est de retour`);
     }
     assert(!(await page.isVisible('#term.is-open')), 'le terminal est ouvert au chargement');
+  });
+
+  await check('la barre de statut affiche le mode et le chemin', async () => {
+    assert(await page.isVisible('.statusbar'), 'barre de statut absente');
+    assert((await page.textContent('#status-mode')).trim().length > 0, 'mode vide');
+    assert((await page.textContent('#status-path')).includes('~'), 'chemin absent');
+  });
+
+  await check('le portrait apparaît dans le sommaire quand l’image existe', async () => {
+    assert(await page.isVisible('#avatar'), 'portrait masqué alors que l’image est servie');
+    const src = await page.getAttribute('#avatar-img', 'src');
+    assert(src && src.includes('avatar'), `source inattendue : ${src}`);
   });
 
   await check('naviguer vers les projets change l’URL et la section', async () => {
@@ -199,9 +221,40 @@ async function main() {
     assert((await page.$$('.stack-item')).length >= 6, 'stack non rendue');
   });
 
+  await check('`portrait` convertit l’image en caractères', async () => {
+    await page.fill('#term-input', 'portrait 30');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    const lines = await page.$$eval('#term-screen .art', (els) => els.map((e) => e.textContent));
+    assert(lines.length >= 8, `trop peu de lignes : ${lines.length}`);
+    assert(lines.every((l) => l.length === 30), 'largeur demandée non respectée');
+    // Une mire produit forcément plusieurs niveaux : un dessin uniforme
+    // signifierait que l'échantillonnage ne lit rien.
+    const distinct = new Set(lines.join('').split(''));
+    assert(distinct.size >= 4, `dessin trop uniforme : ${[...distinct].join('')}`);
+  });
+
+  await check('`neofetch` place le portrait à côté de la fiche', async () => {
+    await page.fill('#term-input', 'neofetch');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    const screen = await page.textContent('#term-screen');
+    assert(screen.includes('patrickchoumi@portfolio'), 'fiche absente');
+    assert((await page.$$('#term-screen .art')).length > 0, 'portrait absent du neofetch');
+  });
+
+  await check('cliquer le portrait ouvre le terminal dessus', async () => {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    await page.click('#avatar');
+    await page.waitForTimeout(500);
+    assert(await page.isVisible('#term.is-open'), 'terminal fermé');
+    assert((await page.textContent('#term-screen')).includes('portrait'), 'commande non jouée');
+  });
+
   await check('la palette s’ouvre et navigue', async () => {
     await page.keyboard.press('Escape'); // ferme le terminal
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(250);
     await page.keyboard.press('Control+k');
     await page.waitForTimeout(200);
     assert(await page.isVisible('.palette-overlay.is-open'), 'palette fermée');
@@ -265,9 +318,9 @@ async function main() {
     await page.screenshot({ path: path.join(SHOT_DIR, '02-accueil-sombre.png') });
     await page.keyboard.press('`');
     await page.waitForTimeout(400);
-    await page.fill('#term-input', 'neofetch');
+    await page.fill('#term-input', 'portrait 26');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(600);
     await page.fill('#term-input', 'tree projects');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(400);

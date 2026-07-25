@@ -4,8 +4,8 @@ familles distribuées sous SIL Open Font License 1.1 :
   JetBrains Mono — © 2020 JetBrains s.r.o.
   https://github.com/JetBrains/JetBrainsMono
 
-  Newsreader — © 2019 The Newsreader Project Authors
-  https://github.com/productiontype/Newsreader
+  Inter — © 2016 The Inter Project Authors
+  https://github.com/rsms/inter
 
 La OFL autorise l'usage, la modification et la redistribution, y compris
 l'auto-hébergement sur un site. Texte complet de la licence :

@@ -7,20 +7,23 @@
 //  que soit l'origine du mouvement (clic, palette, commande `cd`, bouton
 //  Précédent du navigateur), tout converge ici.
 //
-//  Le terminal, lui, n'existe pas tant qu'on ne l'appelle pas : aucune barre
-//  permanente, aucun rappel à l'écran. Une phrase sous le hero et un bouton
-//  dans le sommaire suffisent à le faire découvrir.
+//  Le terminal reste un bonus : rien n'oblige à l'ouvrir pour lire le site.
+//  Il s'annonce en une ligne sous l'accroche, un bouton dans le sommaire, et
+//  le rappel de la barre de statut — jamais par une modale ou une étape
+//  obligée.
 // ═══════════════════════════════════════════════════════════════════════
 
 import { initTheme, toggleTheme, setTheme } from './theme.js';
-import { initI18n, setLang, toggleLang, getLang, onLangChange } from './i18n.js';
+import { initI18n, setLang, toggleLang, getLang, onLangChange, t } from './i18n.js';
 import { initRouter } from './router.js';
 import { renderAll, renderRoute, currentFs } from './render.js';
 import { initRepl } from './repl.js';
 import { initShell } from './shell.js';
 import { initPalette } from './palette.js';
 import { initReveal, matrixRain } from './effects.js';
+import { loadImage } from './ascii.js';
 import { pathForRoute } from '../data/fs.js';
+import { identity } from '../data/profile.js';
 
 // L'arborescence dépend de la langue : on la reconstruit à chaque bascule
 // plutôt que de la recalculer à chaque commande.
@@ -107,6 +110,22 @@ function boot() {
 
   router.start();
   wireEvents();
+  revealAvatar();
+}
+
+// Le portrait n'apparaît que si le fichier existe vraiment : pas d'image
+// cassée dans le sommaire tant que rien n'a été déposé dans public/.
+async function revealAvatar() {
+  const btn = document.getElementById('avatar');
+  const img = document.getElementById('avatar-img');
+  if (!btn || !img || !identity.avatar) return;
+  try {
+    await loadImage(identity.avatar);
+    img.src = identity.avatar;
+    btn.hidden = false;
+  } catch {
+    // Aucune photo : le monogramme « ~/ » de la marque suffit.
+  }
 }
 
 // ─── Événements ───────────────────────────────────────────────────────
@@ -123,6 +142,10 @@ function wireEvents() {
   document.getElementById('btn-lang')?.addEventListener('click', () => toggleLang());
   document.getElementById('btn-search')?.addEventListener('click', () => palette?.open());
   document.getElementById('btn-term')?.addEventListener('click', () => shell?.toggle());
+  document.getElementById('status-term')?.addEventListener('click', () => shell?.toggle());
+  // Cliquer le portrait l'ouvre en caractères : le pont entre les deux vues,
+  // appliqué au visage.
+  document.getElementById('avatar')?.addEventListener('click', () => shell?.exec('portrait'));
   document.getElementById('hint-term')?.addEventListener('click', () => shell?.open());
   document.getElementById('nav-toggle')?.addEventListener('click', () => {
     sidebar().classList.contains('is-open') ? closeSidebar() : openSidebar();
@@ -137,6 +160,7 @@ function wireEvents() {
     initRepl();
     initReveal();
     shell?.refresh();
+    paintStatusHint();
   });
 
   document.addEventListener('keydown', (e) => {
@@ -163,4 +187,16 @@ function wireEvents() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', boot);
+// Le rappel de raccourcis dépend de la plateforme : afficher « ⌘K » à
+// quelqu'un sous Linux est une petite trahison.
+function paintStatusHint() {
+  const el = document.getElementById('status-hint');
+  if (!el) return;
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  el.textContent = t('status.hint').replace('⌘K', mac ? '⌘K' : 'Ctrl K');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  boot();
+  paintStatusHint();
+});

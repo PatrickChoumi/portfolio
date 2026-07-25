@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Patrick Choumi — Développeur</title>
   <meta name="description" content="Portfolio de Patrick Choumi, développeur logiciel. Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui en a envie." />
-  <meta name="theme-color" content="#0d1013" />
+  <meta name="theme-color" content="#101215" />
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230d1013'/><text x='50' y='70' font-family='monospace' font-size='58' fill='%236fdba4' text-anchor='middle'>~/</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23101215'/><text x='50' y='70' font-family='monospace' font-size='58' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Patrick Choumi — Développeur" />
@@ -16,7 +16,7 @@
   <!-- Polices auto-hébergées (voir scripts/fetch-fonts.mjs) : aucune requête
        vers un tiers au chargement. Le portfolio affirme ne rien envoyer
        nulle part — un lien vers un CDN de polices ferait mentir la page. -->
-  <link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/jetbrains-mono-500.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
@@ -29,6 +29,12 @@
 <!-- ═══════════ SOMMAIRE ═══════════ -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-head">
+    <!-- La photo de profil. Cliquer dessus l'ouvre en caractères dans le
+         terminal : c'est le pont entre les deux vues, appliqué au visage.
+         Masquée tant qu'aucun fichier n'est déposé (voir src/js/main.js). -->
+    <button class="avatar" id="avatar" hidden>
+      <img id="avatar-img" alt="" width="46" height="46" />
+    </button>
     <button class="brand" data-nav="home" aria-label="Accueil">
       <span class="brand-prompt" aria-hidden="true">~/</span><span id="brand-name">patrickchoumi</span><span class="brand-caret" aria-hidden="true"></span>
     </button>
@@ -148,6 +154,17 @@
     </div>
   </section>
 </main>
+
+<!-- ═══════════ BARRE DE STATUT ═══════════ -->
+<footer class="statusbar">
+  <span class="status-mode" id="status-mode">LIRE</span>
+  <span class="status-path" id="status-path">~</span>
+  <span class="status-spacer"></span>
+  <span class="status-hint" id="status-hint"></span>
+  <button class="status-btn" id="status-term">
+    <span aria-hidden="true">▸</span> <span data-i18n="status.terminal">terminal</span>
+  </button>
+</footer>
 
 <!-- ═══════════ TERMINAL ═══════════ -->
 <section class="term" id="term" aria-label="Terminal" aria-hidden="true">

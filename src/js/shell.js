@@ -20,6 +20,7 @@
 import { COMMANDS, parseLine, nearestCommand, escapeHtml } from './commands.js';
 import { resolvePath, lookup, formatPath } from '../data/fs.js';
 import { identity, host } from '../data/profile.js';
+import { imageToAscii } from './ascii.js';
 import { t, tx, getLang } from './i18n.js';
 
 const HISTORY_KEY = 'portfolio_history';
@@ -34,7 +35,9 @@ export function initShell(hooks) {
     prompt: document.getElementById('term-prompt'),
     close: document.getElementById('term-close'),
     hint: document.getElementById('term-hint'),
-    barPath: document.getElementById('term-bar-path')
+    barPath: document.getElementById('term-bar-path'),
+    statusPath: document.getElementById('status-path'),
+    statusMode: document.getElementById('status-mode')
   };
   if (!el.term) return null;
 
@@ -62,6 +65,30 @@ export function initShell(hooks) {
     clear: () => { el.screen.innerHTML = ''; },
     history: () => history.slice(),
     theme: () => document.documentElement.getAttribute('data-theme') || 'light',
+
+    // Largeur utile de l'écran, en caractères — mesurée sur une vraie glyphe
+    // plutôt que devinée, puisque la police peut ne pas être encore chargée.
+    columns: () => {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;font:inherit';
+      probe.textContent = '0'.repeat(80);
+      el.screen.appendChild(probe);
+      const chW = probe.getBoundingClientRect().width / 80;
+      probe.remove();
+      const usable = el.screen.clientWidth - 40;
+      return Math.max(20, Math.floor(usable / (chW || 8)));
+    },
+
+    // Le portrait en caractères. Renvoie null si aucune image n'est déposée :
+    // l'appelant retombe alors sur son rendu de secours.
+    ascii: async (cols) => {
+      if (!identity.avatar) return null;
+      try {
+        return await imageToAscii(identity.avatar, cols);
+      } catch {
+        return null;
+      }
+    },
     uptime: () => {
       const s = Math.floor((Date.now() - started) / 1000);
       return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
@@ -90,7 +117,11 @@ export function initShell(hooks) {
 
   function refreshPrompt() {
     el.prompt.innerHTML = promptHtml();
+    // Le chemin s'affiche à deux endroits : dans la barre du tiroir, et dans
+    // la barre de statut — qui reste visible même terminal fermé, et rappelle
+    // que la page et le shell regardent le même dossier.
     if (el.barPath) el.barPath.textContent = pathLabel();
+    if (el.statusPath) el.statusPath.textContent = pathLabel();
   }
 
   // ─── Exécution ──────────────────────────────────────────────────────
@@ -119,7 +150,22 @@ export function initShell(hooks) {
       out = [{ text: `${name}: ${e.message}`, cls: 'is-err' }];
     }
 
-    // Pipe : seul `grep` est accepté à droite. Le reste serait du décor.
+    // Une commande peut renvoyer une promesse — `portrait` et `neofetch`
+    // attendent le décodage d'une image. On finit le rendu quand elle résout,
+    // sans bloquer la saisie entre-temps.
+    if (out && typeof out.then === 'function') {
+      out.then(finish).catch((e) => finish([{ text: `${name}: ${e.message}`, cls: 'is-err' }]));
+      return;
+    }
+    finish(out);
+
+    function finish(lines) {
+      write(applyPipe(lines || [], pipe));
+    }
+  }
+
+  // Pipe : seul `grep` est accepté à droite. Le reste serait du décor.
+  function applyPipe(out, pipe) {
     if (pipe && pipe[0]) {
       if (pipe[0] !== 'grep') {
         out = [{ text: `${pipe[0]}: ${t('shell.notfound')} (| grep)`, cls: 'is-err' }];
@@ -129,7 +175,7 @@ export function initShell(hooks) {
         if (!out.length) out = [{ text: t('shell.matchesNone'), cls: 'is-dim' }];
       }
     }
-    write(out);
+    return out;
   }
 
   const plainOf = (l) => (l.html != null ? l.html.replace(/<[^>]*>/g, '') : (l.text || ''));
@@ -271,6 +317,7 @@ export function initShell(hooks) {
   function refreshChrome() {
     refreshPrompt();
     if (el.hint) el.hint.textContent = t('term.hint');
+    if (el.statusMode) el.statusMode.textContent = open ? 'SHELL' : t('status.read');
   }
   refreshChrome();
 
