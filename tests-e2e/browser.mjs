@@ -80,7 +80,7 @@ async function main() {
     executablePath: process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined),
     args: ['--no-sandbox']
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, acceptDownloads: true });
 
   // On distingue les vraies erreurs de script du bruit réseau : une machine
   // de CI hors ligne peut échouer à charger une ressource externe sans que
@@ -112,6 +112,19 @@ async function main() {
 
   await check('le sommaire est peuplé', async () => {
     assert((await page.$$('.tree-item')).length >= 6, 'sommaire incomplet');
+  });
+
+  await check('le sommaire déplie le dossier courant', async () => {
+    const before = (await page.$$('.tree-item')).length;
+    await page.click('.tree-item[data-nav="experience"]');
+    await page.waitForTimeout(250);
+    const after = (await page.$$('.tree-item[data-depth="1"]')).length;
+    assert(after >= 2, `dossier non déplié : ${after} enfant(s)`);
+    assert((await page.$$('.tree-item')).length > before, 'le nombre d’entrées n’a pas augmenté');
+    // Les enfants viennent du système de fichiers virtuel, pas d'une liste
+    // écrite à côté : leurs noms doivent être ceux des fichiers.
+    const names = await page.$$eval('.tree-item[data-depth="1"]', (els) => els.map((e) => e.textContent.trim()));
+    assert(names.every((n) => n.endsWith('.md')), `noms inattendus : ${names.join(', ')}`);
   });
 
   // Ces éléments-là ont été retirés pour de bon : s'ils réapparaissent, c'est
@@ -221,6 +234,17 @@ async function main() {
     assert((await page.$$('.stack-item')).length >= 6, 'stack non rendue');
   });
 
+  await check('le portrait de la page bascule en caractères', async () => {
+    await page.click('.tree-item[data-nav="about"]');
+    await page.waitForTimeout(250);
+    assert(await page.isVisible('#portrait'), 'portrait absent de la page « à propos »');
+    await page.click('#portrait-flip');
+    await page.waitForTimeout(700);
+    assert(await page.getAttribute('#portrait-flip', 'aria-pressed') === 'true', 'état non annoncé');
+    const art = await page.textContent('#portrait-ascii');
+    assert(art.split('\n').length > 20, 'dessin trop court');
+  });
+
   await check('`portrait` convertit l’image en caractères', async () => {
     await page.fill('#term-input', 'portrait 30');
     await page.keyboard.press('Enter');
@@ -250,6 +274,17 @@ async function main() {
     await page.waitForTimeout(500);
     assert(await page.isVisible('#term.is-open'), 'terminal fermé');
     assert((await page.textContent('#term-screen')).includes('portrait'), 'commande non jouée');
+  });
+
+  await check('`wallpaper` produit un PNG téléchargeable', async () => {
+    const download = page.waitForEvent('download', { timeout: 8000 }).catch(() => null);
+    await page.fill('#term-input', 'wallpaper 1280x720');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(900);
+    assert((await page.textContent('#term-screen')).includes('portrait-1280x720.png'), 'nom de fichier absent');
+    const file = await download;
+    assert(file, 'aucun téléchargement déclenché');
+    assert(file.suggestedFilename() === 'portrait-1280x720.png', `nom inattendu : ${file.suggestedFilename()}`);
   });
 
   await check('la palette s’ouvre et navigue', async () => {

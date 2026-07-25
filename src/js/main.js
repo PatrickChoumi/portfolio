@@ -21,7 +21,8 @@ import { initRepl } from './repl.js';
 import { initShell } from './shell.js';
 import { initPalette } from './palette.js';
 import { initReveal, matrixRain } from './effects.js';
-import { loadImage } from './ascii.js';
+import { loadImage, imageToAscii } from './ascii.js';
+import { PORTRAIT_COLS } from './commands.js';
 import { pathForRoute } from '../data/fs.js';
 import { identity } from '../data/profile.js';
 
@@ -113,19 +114,56 @@ function boot() {
   revealAvatar();
 }
 
-// Le portrait n'apparaît que si le fichier existe vraiment : pas d'image
-// cassée dans le sommaire tant que rien n'a été déposé dans public/.
+// Le portrait n'apparaît — dans le sommaire comme sur la page « à propos » —
+// que si le fichier existe vraiment : pas d'image cassée tant que rien n'a
+// été déposé dans public/.
 async function revealAvatar() {
-  const btn = document.getElementById('avatar');
-  const img = document.getElementById('avatar-img');
-  if (!btn || !img || !identity.avatar) return;
+  if (!identity.avatar) return;
   try {
     await loadImage(identity.avatar);
-    img.src = identity.avatar;
-    btn.hidden = false;
   } catch {
-    // Aucune photo : le monogramme « ~/ » de la marque suffit.
+    return; // aucune photo : le monogramme « ~/ » de la marque suffit.
   }
+
+  const medallion = document.getElementById('avatar');
+  const medallionImg = document.getElementById('avatar-img');
+  if (medallion && medallionImg) {
+    medallionImg.src = identity.avatar;
+    medallion.hidden = false;
+  }
+
+  const figure = document.getElementById('portrait');
+  const img = document.getElementById('portrait-img');
+  if (figure && img) {
+    img.src = identity.avatar;
+    figure.hidden = false;
+  }
+}
+
+// La bascule image ↔ caractères, sur la page « à propos ». Le dessin n'est
+// calculé qu'au premier retournement : tant que personne ne clique, on ne
+// décode rien.
+function wirePortraitFlip() {
+  const flip = document.getElementById('portrait-flip');
+  const pre = document.getElementById('portrait-ascii');
+  if (!flip || !pre) return;
+
+  flip.addEventListener('click', async () => {
+    const open = !flip.classList.contains('is-flipped');
+    if (open && !pre.textContent) {
+      try {
+        // Même largeur qu'au terminal — c'est le rendu qui a été calibré, et
+        // le seul qui tienne dans 190 px sans être rogné. Le rapport de
+        // caractère passé ici est celui du CSS (interligne 1,05 sur une chasse
+        // de 0,6) : sans lui, le dessin sortirait étiré en hauteur.
+        pre.textContent = (await imageToAscii(identity.avatar, PORTRAIT_COLS, { charRatio: 1.05 / 0.6 })).join('\n');
+      } catch {
+        return;
+      }
+    }
+    flip.classList.toggle('is-flipped', open);
+    flip.setAttribute('aria-pressed', String(open));
+  });
 }
 
 // ─── Événements ───────────────────────────────────────────────────────
@@ -136,7 +174,7 @@ function wireEvents() {
     const target = e.target.closest('[data-nav]');
     if (!target) return;
     e.preventDefault();
-    navigate({ section: target.dataset.nav, slug: target.dataset.slug });
+    navigate({ section: target.dataset.nav, slug: target.dataset.slug, anchor: target.dataset.anchor });
   });
 
   document.getElementById('btn-lang')?.addEventListener('click', () => toggleLang());
@@ -151,6 +189,7 @@ function wireEvents() {
     sidebar().classList.contains('is-open') ? closeSidebar() : openSidebar();
   });
   scrim()?.addEventListener('click', closeSidebar);
+  wirePortraitFlip();
 
   // Le changement de langue reconstruit tout ce qui porte du texte : page,
   // arborescence virtuelle, REPL, invite du shell.

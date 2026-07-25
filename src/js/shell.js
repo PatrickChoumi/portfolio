@@ -20,7 +20,7 @@
 import { COMMANDS, parseLine, nearestCommand, escapeHtml } from './commands.js';
 import { resolvePath, lookup, formatPath } from '../data/fs.js';
 import { identity, host } from '../data/profile.js';
-import { imageToAscii } from './ascii.js';
+import { imageToAscii, asciiToPng } from './ascii.js';
 import { t, tx, getLang } from './i18n.js';
 
 const HISTORY_KEY = 'portfolio_history';
@@ -81,6 +81,31 @@ export function initShell(hooks) {
       } catch {
         return null;
       }
+    },
+
+    // Dimensions de l'écran, pour un fond d'écran à la bonne taille.
+    screen: () => ({
+      width: Math.round(window.screen?.width * (window.devicePixelRatio || 1)) || 2560,
+      height: Math.round(window.screen?.height * (window.devicePixelRatio || 1)) || 1440
+    }),
+
+    // Composition du dessin en image, aux couleurs du thème courant.
+    png: (lines, opts) => {
+      const css = getComputedStyle(document.documentElement);
+      return asciiToPng(lines, {
+        bg: css.getPropertyValue('--bg').trim() || '#101215',
+        fg: css.getPropertyValue('--accent').trim() || '#7aa2f7',
+        ...opts
+      });
+    },
+
+    download: (dataUrl, filename) => {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     },
 
     uptime: () => {

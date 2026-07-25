@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Portfolio de Patrick Choumi — un portfolio qui est aussi un système de fichiers.",
+  "description": "Portfolio d'Ismaël Patrick Choumi Nami, élève ingénieur en génie informatique — un portfolio qui est aussi un système de fichiers.",
   "engines": {
     "node": ">=20"
   },

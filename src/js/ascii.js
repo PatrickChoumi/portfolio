@@ -167,3 +167,49 @@ export async function imageToAscii(url, cols = 40, {
 }
 
 const clamp = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+// ─── Le dessin, en image ──────────────────────────────────────────────
+// Compose les lignes de caractères sur un canvas aux dimensions d'un écran
+// et renvoie un PNG. Sert à la commande `wallpaper` : le portfolio fabrique
+// un fond d'écran à partir de la même image que le reste — toujours une
+// source, plusieurs rendus.
+//
+// La taille de police n'est pas choisie au hasard : elle est calculée pour
+// que le dessin remplisse la fraction voulue de l'écran, quelle que soit la
+// résolution demandée.
+export function asciiToPng(lines, { width = 2560, height = 1440, bg = '#101215', fg = '#7aa2f7', fill = 0.8 } = {}) {
+  const cols = Math.max(...lines.map((l) => l.length));
+  const rows = lines.length;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+
+  // Largeur d'un caractère à une taille de référence, mesurée plutôt que
+  // supposée : elle dépend de la police réellement disponible.
+  const REF = 100;
+  const font = (size) => `${size}px "JetBrains Mono", ui-monospace, monospace`;
+  ctx.font = font(REF);
+  const unitWidth = ctx.measureText('0').width / REF;   // largeur / taille
+  const unitHeight = 1.05;                              // interligne du terminal
+
+  const size = Math.floor(Math.min(
+    (width * fill) / (cols * unitWidth),
+    (height * fill) / (rows * unitHeight)
+  ));
+
+  ctx.font = font(size);
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = fg;
+
+  const charW = unitWidth * size;
+  const lineH = unitHeight * size;
+  const x0 = (width - cols * charW) / 2;
+  const y0 = (height - rows * lineH) / 2;
+  lines.forEach((line, i) => ctx.fillText(line, x0, y0 + i * lineH));
+
+  return canvas.toDataURL('image/png');
+}

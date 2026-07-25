@@ -24,14 +24,16 @@ la met en pratique sous les yeux du visiteur :
 
 | Ce qui est affirmé | Ce qui le prouve, dans le site même |
 | --- | --- |
-| « Peu de dépendances » | zéro dépendance à l'exécution ; 31 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
+| « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 48 tests unitaires + 24 vérifications navigateur, en CI |
+| « Les garanties se prouvent » | 48 tests unitaires + 27 vérifications navigateur, en CI |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
-## Le portrait, deux fois
+## Le portrait, quatre fois
 
-C'est le principe du site appliqué au visage : **une seule image, deux rendus.**
+C'est le principe du site appliqué au visage : **une seule image, plusieurs
+rendus** — le médaillon du sommaire, le portrait retournable de la page « à
+propos », le dessin du terminal, et le fond d'écran que `wallpaper` exporte.
 
 Dans le sommaire, la photo de profil est affichée telle qu'elle est, dans un
 médaillon rond légèrement recentré sur le visage — à cinquante pixels, cadrer
@@ -39,6 +41,10 @@ la planche entière ne montre rien. Une version « duotone » a été tentée �
 teintée à l'accent et inversée en thème sombre pour que le fond blanc ne troue
 pas la colonne : le portrait sortait en négatif, méconnaissable. Sur un avatar,
 l'identité prime sur la palette.
+
+Sur la page « à propos », le portrait est affiché en grand — et **il se
+retourne d'un clic** sur sa version en caractères. C'est la thèse du site
+rendue visible sans avoir à ouvrir le terminal.
 
 Dans le terminal, `portrait` convertit **le même fichier** en tableau de
 caractères, à la volée :
@@ -79,11 +85,18 @@ fusions disloquent la grille et le portrait devient une bouillie de traits.
 Le terminal coupe donc les ligatures (`font-variant-ligatures: none`).
 
 **La taille fait partie du réglage.** Le rendu a été jugé à une largeur
-précise — 52 colonnes. `portrait` et `neofetch` s'y tiennent tous les deux,
-pour que le portrait soit le même partout ; changer l'un des deux réglages
-sans l'autre casse l'équilibre. `portrait 90` reste possible pour une version
-plus grande, et la largeur du terminal reste la limite : sur un téléphone, le
-dessin s'adapte plutôt que de déborder.
+précise — 52 colonnes (`PORTRAIT_COLS`). `portrait`, `neofetch` et le portrait
+retournable de la page s'y tiennent tous les trois, pour que le dessin soit le
+même partout ; changer l'un des réglages sans l'autre casse l'équilibre.
+`portrait 90` reste possible pour une version plus grande, et la largeur du
+terminal reste la limite : sur un téléphone, le dessin s'adapte plutôt que de
+déborder.
+
+**Et en fond d'écran.** `wallpaper` compose le même dessin sur un canvas aux
+dimensions d'un écran et le télécharge en PNG : `wallpaper`, `wallpaper
+3840x2160`, ou `wallpaper 1920x1080 90` pour forcer la largeur en colonnes. Les
+couleurs sont celles du thème courant, lues sur la page — le fond d'écran
+change donc selon qu'on le demande en clair ou en sombre.
 
 ### Mettre ta photo
 
@@ -121,9 +134,10 @@ marque la page courante, le curseur, l'invite du shell et le mot souligné du
 titre. Nulle part ailleurs.
 
 L'interface, elle, assume d'être un outil : barre de statut en bas (mode,
-chemin courant, raccourcis), papier millimétré au fond, noms de fichiers dans
-le sommaire. La justification est plafonnée à 34 rem, soit environ 70
-caractères : au-delà, l'œil perd la ligne en revenant à la marge.
+chemin courant, raccourcis), noms de fichiers dans le sommaire, et un sommaire
+qui se déplie — le dossier de la section courante ouvre ses vrais enfants, ceux
+que le terminal explore. La justification est plafonnée à 34 rem, soit environ
+70 caractères : au-delà, l'œil perd la ligne en revenant à la marge.
 
 Ce qui a été retiré en cours de route, et pourquoi :
 
@@ -134,6 +148,7 @@ Ce qui a été retiré en cours de route, et pourquoi :
 | Les onglets de buffer | Ils répétaient le sommaire, en travers de la lecture. |
 | Les jauges de compétence | « Quatre sur cinq » ne veut rien dire pour celui qui lit, et beaucoup trop pour celui qui écrit. Une phrase honnête à la place. |
 | Les cartes, chips et pastilles | Des rangées séparées d'un filet disent la même chose sans encadrer. |
+| Le papier millimétré du fond | Une grille de fond décore sans rien structurer : elle se voyait derrière chaque paragraphe et ne portait aucune information. |
 
 ## Démarrer
 
@@ -171,8 +186,8 @@ export const projects = [
   {
     slug: 'atlas',                    // → /projets/atlas et projects/atlas/
     name: 'Atlas',
-    year: '2024',
-    status: 'wip',                    // live | wip | archived
+    year: '2026',
+    status: 'planned',                // live | wip | planned | archived
     tagline: { fr: '…', en: '…' },    // une ligne, 90 caractères maximum
     summary: { fr: '…', en: '…' },
     highlights: { fr: ['…'], en: ['…'] },
@@ -189,8 +204,13 @@ parcours qui n'est plus antéchronologique, accroche trop longue pour sa
 rangée, lien relatif là où il faut une URL absolue, ou nom de techno accentué
 laissé en français dans la version anglaise.
 
-> ⚠️ Les données livrées sont un **canevas crédible**, pas une biographie :
-> remplace-les par ton parcours réel avant de publier.
+**`status` sert à ne pas mentir.** Un projet qui n'est pas commencé n'est ni
+`live` ni `wip` : il est `planned`, et la page l'affiche « à venir ». La
+description dit alors une intention, pas un résultat — c'est le statut qui fait
+la différence, et il est visible sur chaque rangée.
+
+> ⚠️ Si tu repars de ce dépôt : le contenu de `profile.js` est le parcours de
+> son auteur. Remplace-le par le tien avant de publier.
 
 ## Le terminal
 
@@ -207,10 +227,10 @@ phrase sous l'accroche, ou le bouton `>_` du sommaire.
 └── stack/            un .txt par groupe
 ```
 
-Vingt-deux commandes : `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `find`,
-`grep`, `open`, `whoami`, `neofetch`, `portrait`, `cv`, `print`, `mail`,
-`theme`, `lang`, `history`, `clear`, `date`, `echo`, `uname`, `exit` — plus
-quelques-unes qui ne sont pas dans `help`.
+Vingt-trois commandes : `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `find`,
+`grep`, `open`, `whoami`, `neofetch`, `portrait`, `wallpaper`, `cv`, `print`,
+`mail`, `theme`, `lang`, `history`, `clear`, `date`, `echo`, `uname`, `exit` —
+plus quelques-unes qui ne sont pas dans `help`.
 
 - <kbd>Tab</kbd> complète les commandes et les chemins (préfixe commun le plus long) ;
 - <kbd>↑</kbd> <kbd>↓</kbd> parcourent un historique persistant ;
@@ -247,7 +267,7 @@ src/js/effects.js       révélation au défilement + easter egg
 src/styles/main.css     design system
 scripts/fetch-fonts.mjs auto-hébergement des polices
 tests/                  48 tests node:test — logique pure
-tests-e2e/browser.mjs   24 vérifications navigateur
+tests-e2e/browser.mjs   27 vérifications navigateur
 tests-e2e/make-png.mjs  encodeur PNG minimal (mire du harnais, sans dépendance)
 ```
 

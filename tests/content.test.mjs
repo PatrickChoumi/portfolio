@@ -24,6 +24,11 @@ function assertBilingual(value, label) {
 
 test('l’identité est complète et l’email est plausible', () => {
   assert.ok(identity.name.trim().length > 0);
+  assert.ok(identity.fullName.includes(identity.name.split(' ').pop()),
+    'le nom complet doit contenir le nom affiché');
+  assert.match(identity.avatar, /^\/[\w.-]+\.(png|jpg|jpeg|webp|avif)$/i,
+    'le chemin de l’avatar doit porter une extension explicite');
+  assertBilingual(identity.avatarNote, 'identity.avatarNote');
   assert.match(identity.email, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i);
   assertBilingual(identity.role, 'identity.role');
   assertBilingual(identity.location, 'identity.location');
@@ -90,7 +95,7 @@ test('les projets sont uniques, datés et bilingues', () => {
 
   for (const p of projects) {
     assert.equal(slugify(p.slug), p.slug, `${p.slug} n’est pas un slug propre`);
-    assert.ok(['live', 'wip', 'archived'].includes(p.status), `${p.slug} : statut inconnu`);
+    assert.ok(['live', 'wip', 'planned', 'archived'].includes(p.status), `${p.slug} : statut inconnu`);
     assert.match(p.year, /^\d{4}$/, `${p.slug} : année invalide`);
     assertBilingual(p.tagline, `${p.slug}.tagline`);
     assertBilingual(p.summary, `${p.slug}.summary`);

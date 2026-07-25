@@ -9,7 +9,8 @@
 // uniquement sur ce qui est actif ou chiffré.
 
 import { identity, hero, about, experience, projects, stack, principles, contact } from '../data/profile.js';
-import { buildFs, shortHash } from '../data/fs.js';
+import { buildFs, shortHash, lookup } from '../data/fs.js';
+import { pick, slugify } from '../data/lang.js';
 import { t, tx, getLang } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -32,34 +33,77 @@ export function inline(str) {
 const STATUS_LABEL = {
   live: { fr: 'en ligne', en: 'live' },
   wip: { fr: 'en cours', en: 'in progress' },
+  // « À venir » évite d'avoir à mentir : un projet qui n'a pas commencé
+  // n'est ni en ligne ni en cours, et sa description est une intention.
+  planned: { fr: 'à venir', en: 'planned' },
   archived: { fr: 'archivé', en: 'archived' }
 };
 
 const periodOf = (job) => `${job.start} — ${job.end || (getLang() === 'en' ? 'now' : 'aujourd’hui')}`;
 
 // ─── Sommaire ─────────────────────────────────────────────────────────
-// Des noms de fichiers, et un filet d'accent sur celui qu'on lit. Pas
-// d'icônes, pas de compteurs : le sommaire n'a rien à démontrer.
+// L'arborescence est dérivée du système de fichiers virtuel, pas d'une liste
+// écrite à côté : les entrées affichées sont exactement les nœuds que le
+// terminal explore. Un dossier porte un chevron et se déplie quand on est
+// dedans — c'est ce qui fait de la colonne un explorateur plutôt qu'un menu.
 const TREE = [
   { label: 'README.md', section: 'home' },
   { label: 'about.md', section: 'about' },
-  { label: 'experience/', section: 'experience' },
-  { label: 'projects/', section: 'projects' },
-  { label: 'stack/', section: 'stack' },
+  { label: 'experience/', section: 'experience', dir: 'experience' },
+  { label: 'projects/', section: 'projects', dir: 'projects' },
+  { label: 'stack/', section: 'stack', dir: 'stack' },
   { label: 'contact.md', section: 'contact' }
 ];
+
+// Les enfants réels d'un dossier du VFS, et la route de chacun. On ne garde
+// que les fichiers qui mènent quelque part : `README.md` doublonnerait avec
+// le dossier lui-même.
+function treeChildren(dirName) {
+  const node = lookup(currentFs(), [dirName]);
+  if (!node || node.type !== 'dir') return [];
+  return node.children
+    .filter((c) => !c.name.startsWith('.') && c.name !== 'README.md')
+    .map((c) => ({
+      label: c.name + (c.type === 'dir' ? '/' : ''),
+      route: c.route || { section: dirName }
+    }));
+}
+
+function treeRow({ label, active, depth, route, caret }) {
+  const attrs = [
+    `data-nav="${esc(route.section)}"`,
+    route.slug ? `data-slug="${esc(route.slug)}"` : '',
+    route.anchor ? `data-anchor="${esc(route.anchor)}"` : '',
+    `data-depth="${depth}"`,
+    active ? ' aria-current="page"' : ''
+  ].filter(Boolean).join(' ');
+  return `<button class="tree-item${active ? ' is-active' : ''}" ${attrs}>` +
+    `<span class="tree-caret" aria-hidden="true">${caret}</span>${esc(label)}</button>`;
+}
 
 export function renderTree(route) {
   const el = $('#tree');
   if (!el) return;
 
   el.innerHTML = TREE.map((item) => {
-    const active = route.section === item.section;
-    const row = `<button class="tree-item${active ? ' is-active' : ''}" data-nav="${item.section}" data-depth="0"${active ? ' aria-current="page"' : ''}>${esc(item.label)}</button>`;
-    // Les projets se déplient seulement quand on est dans la section : le
-    // sommaire reste court partout ailleurs.
-    if (item.section !== 'projects' || route.section !== 'projects') return row;
-    return row + projects.map((p) => `<button class="tree-item${route.slug === p.slug ? ' is-active' : ''}" data-nav="projects" data-slug="${esc(p.slug)}" data-depth="1">${esc(p.slug)}/</button>`).join('');
+    const inside = route.section === item.section;
+    const row = treeRow({
+      label: item.label,
+      active: inside && !route.slug,
+      depth: 0,
+      route: { section: item.section },
+      caret: item.dir ? (inside ? '▾' : '▸') : ' '
+    });
+    if (!item.dir || !inside) return row;
+
+    // Déplié : les enfants réels du dossier, dans l'ordre du VFS.
+    return row + treeChildren(item.dir).map((child) => treeRow({
+      label: child.label,
+      active: !!(route.slug && child.route.slug === route.slug),
+      depth: 1,
+      route: child.route,
+      caret: ' '
+    })).join('');
   }).join('');
 }
 
@@ -107,6 +151,9 @@ function renderHome() {
 function renderAbout() {
   $('#about-title').textContent = tx(about.title);
   $('#about-body').innerHTML = tx(about.body).map((p) => `<p>${inline(p)}</p>`).join('');
+
+  const note = $('#portrait-note');
+  if (note) note.innerHTML = `${esc(tx(identity.avatarNote))} ${esc(t('portrait.flip'))}`;
 }
 
 // ─── Parcours ─────────────────────────────────────────────────────────
@@ -191,7 +238,7 @@ function renderProjects(route) {
 // informatif — « quatre sur cinq » ne veut rien dire pour celui qui lit.
 function renderStack() {
   $('#stack-body').innerHTML = `<div class="stack-list">${stack.map((g) => `
-    <div class="stack-group">
+    <div class="stack-group" id="stack-${esc(slugify(pick(g.group, 'en')))}">
       <span class="stack-label">${esc(tx(g.group))}</span>
       <div class="stack-items">
         ${g.items.map((i) => `<p class="stack-item">

@@ -34,6 +34,9 @@ function makeCtx(cwd = []) {
     theme: () => effects.theme,
     uptime: () => '3s',
     columns: () => 60,
+    screen: () => ({ width: 2560, height: 1440 }),
+    png: () => 'data:image/png;base64,stub',
+    download(url, name) { effects.downloaded = name; },
     // Aucune photo dans un contexte de test : les commandes qui en dépendent
     // doivent se rabattre proprement. Le rendu réel d'une image se vérifie
     // dans le navigateur (tests-e2e/browser.mjs).

@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Patrick Choumi — Développeur</title>
-  <meta name="description" content="Portfolio de Patrick Choumi, développeur logiciel. Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui en a envie." />
+  <title>Patrick Choumi — Élève ingénieur, génie informatique</title>
+  <meta name="description" content="Portfolio de Patrick Choumi, élève ingénieur en génie informatique à Yaoundé. Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui en a envie." />
   <meta name="theme-color" content="#101215" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23101215'/><text x='50' y='70' font-family='monospace' font-size='58' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Patrick Choumi — Développeur" />
-  <meta property="og:description" content="Une page qui se lit simplement — et qui s'explore aussi au terminal." />
+  <meta property="og:title" content="Patrick Choumi — Élève ingénieur, génie informatique" />
+  <meta property="og:description" content="Élève ingénieur en génie informatique à Yaoundé. Une page qui se lit simplement — et qui s'explore aussi au terminal." />
 
   <!-- Polices auto-hébergées (voir scripts/fetch-fonts.mjs) : aucune requête
        vers un tiers au chargement. Le portfolio affirme ne rien envoyer
@@ -108,6 +108,18 @@
         <p class="kicker">about.md</p>
         <h1 class="section-title" id="about-title"></h1>
       </div>
+      <!-- Le portrait : même fichier que le médaillon du sommaire, en plus
+           grand, et qui bascule sur sa version en caractères d'un clic. La
+           thèse du site — une source, deux rendus — rendue visible sans
+           ouvrir le terminal. Masqué tant qu'aucune image n'est déposée. -->
+      <figure class="portrait" id="portrait" hidden>
+        <button class="portrait-flip" id="portrait-flip" aria-pressed="false">
+          <span class="portrait-face"><img id="portrait-img" alt="" /></span>
+          <span class="portrait-back" aria-hidden="true"><pre id="portrait-ascii"></pre></span>
+        </button>
+        <figcaption class="portrait-note" id="portrait-note"></figcaption>
+      </figure>
+
       <div class="prose" id="about-body"></div>
     </div>
   </section>
@@ -117,7 +129,7 @@
       <div class="section-head">
         <p class="kicker">git log</p>
         <h1 class="section-title" data-i18n="exp.title">Parcours</h1>
-        <p class="section-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque poste est un commit ; les lignes marquées sont ce qui a réellement changé.</p>
+        <p class="section-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque étape est un commit ; les lignes marquées sont ce qui a été appris.</p>
       </div>
       <div class="gitlog" id="gitlog"></div>
     </div>
@@ -132,7 +144,7 @@
       <div class="section-head">
         <p class="kicker">stack/</p>
         <h1 class="section-title" data-i18n="stack.title">Stack</h1>
-        <p class="section-lede" data-i18n="stack.lede">Une liste, pas un palmarès. Des jauges donneraient une fausse précision : personne ne sait ce que « quatre sur cinq » veut dire.</p>
+        <p class="section-lede" data-i18n="stack.lede">Ce que j’utilise, et ce que j’en sais. Le C d’abord, le reste par-dessus.</p>
       </div>
       <div id="stack-body"></div>
     </div>

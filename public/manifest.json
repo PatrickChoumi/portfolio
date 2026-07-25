@@ -1,7 +1,7 @@
 {
-  "name": "Patrick Choumi — Portfolio",
+  "name": "Patrick Choumi — Élève ingénieur, génie informatique",
   "short_name": "patrickchoumi",
-  "description": "Un portfolio qui est aussi un système de fichiers.",
+  "description": "Portfolio d'un élève ingénieur en génie informatique. Un portfolio qui est aussi un système de fichiers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#101215",

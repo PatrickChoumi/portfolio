@@ -76,7 +76,7 @@ export function escapeHtml(s) {
 // src/js/ascii.js ont été calibrés à l'œil sur cette taille : `portrait` et
 // `neofetch` s'y tiennent tous les deux, pour que le dessin soit le même
 // partout.
-const PORTRAIT_COLS = 52;
+export const PORTRAIT_COLS = 52;
 
 // Vignette de secours : utilisée par `neofetch` tant qu'aucune photo n'est
 // déposée dans public/avatar.png.
@@ -310,6 +310,37 @@ export const COMMANDS = {
           : '`portrait 90` pour une version plus grande.'));
       }
       return out;
+    }
+  },
+
+  wallpaper: {
+    usage: { fr: 'télécharge le portrait en fond d’écran', en: 'download the portrait as a wallpaper' },
+    run: async (args, ctx) => {
+      const [a, b] = args;
+      // `wallpaper 2560x1440` ou `wallpaper 1920x1080 80` (largeur en
+      // caractères). Sans rien, la résolution de l'écran et la largeur de
+      // référence du portrait.
+      const size = /^(\d+)x(\d+)$/i.exec(a || '');
+      const width = size ? Number(size[1]) : ctx.screen().width;
+      const height = size ? Number(size[2]) : ctx.screen().height;
+      const cols = Math.min(160, Math.max(20, Number(size ? b : a) || PORTRAIT_COLS));
+
+      const art = await ctx.ascii(cols);
+      if (!art) {
+        const where = `public${identity.avatar || '/avatar.png'}`;
+        return [dim(ctx.lang === 'en'
+          ? `No picture yet. Drop one at ${where} and reload.`
+          : `Pas encore de photo. Dépose-la dans ${where} et recharge.`)];
+      }
+
+      const name = `portrait-${width}x${height}.png`;
+      ctx.download(ctx.png(art, { width, height }), name);
+      return [
+        html(`<span class="is-ok">↓</span> ${escapeHtml(name)}`),
+        dim(ctx.lang === 'en'
+          ? 'Try `wallpaper 3840x2160` or `wallpaper 1920x1080 90` for a finer drawing.'
+          : 'Essaie `wallpaper 3840x2160`, ou `wallpaper 1920x1080 90` pour un dessin plus fin.')
+      ];
     }
   },
 

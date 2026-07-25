@@ -9,20 +9,19 @@
 //  (src/js/i18n.js) choisit la langue à l'affichage. Si tu n'écris qu'une
 //  chaîne simple au lieu d'un objet, elle est utilisée telle quelle dans
 //  les deux langues — pratique pour les noms propres.
-//
-//  ⚠️  Les données ci-dessous sont un CANEVAS crédible, pas la vérité :
-//      remplace-les par ton parcours réel avant de publier.
 // ═══════════════════════════════════════════════════════════════════════
 
 export const identity = {
   name: 'Patrick Choumi',
+  // Nom complet — n'apparaît que sur le CV (`cv` au terminal, et l'impression
+  // de la page), où l'état civil a sa place.
+  fullName: 'Ismaël Patrick Choumi Nami',
   handle: 'patrickchoumi',
-  initials: 'PC',
   role: {
-    fr: 'Développeur logiciel — web, systèmes, outils',
-    en: 'Software developer — web, systems, tooling'
+    fr: 'Élève ingénieur — génie informatique',
+    en: 'Engineering student — computer engineering'
   },
-  location: { fr: 'France · à distance', en: 'France · remote' },
+  location: { fr: 'Yaoundé, Cameroun', en: 'Yaoundé, Cameroon' },
   // 'open' | 'listening' | 'closed' — pilote la pastille de disponibilité.
   availability: 'listening',
   availabilityLabel: {
@@ -32,9 +31,9 @@ export const identity = {
   },
   email: 'patrickchoumi@gmail.com',
 
-  // La photo de profil. Le MÊME fichier sert deux fois : affiché dans le
-  // sommaire, et converti en caractères par la commande `portrait` du
-  // terminal (src/js/ascii.js).
+  // L'avatar. Le MÊME fichier sert deux fois : affiché dans le sommaire et
+  // sur la page « à propos », et converti en caractères par les commandes
+  // `portrait` et `wallpaper` du terminal (src/js/ascii.js).
   //
   // L'extension doit correspondre au contenu réel du fichier : un JPEG nommé
   // .png fonctionne dans la plupart des navigateurs (ils reniflent le type),
@@ -43,10 +42,18 @@ export const identity = {
   //
   // Absent → le sommaire garde le monogramme « ~/ » et `neofetch` sa vignette.
   avatar: '/avatar.jpg',
+  avatarNote: {
+    fr: 'Personnage de Blue Lock — ce n’est pas une photo de moi.',
+    en: 'A Blue Lock character — not a photo of me.'
+  },
 
   links: [
-    { label: 'GitHub', url: 'https://github.com/patrickchoumi', handle: '@patrickchoumi' },
-    { label: 'LinkedIn', url: 'https://www.linkedin.com/in/patrickchoumi', handle: '/in/patrickchoumi' },
+    { label: 'GitHub', url: 'https://github.com/PatrickChoumi', handle: '@PatrickChoumi' },
+    {
+      label: 'LinkedIn',
+      url: 'https://www.linkedin.com/in/isma%C3%ABl-patrick-choumi-nami-9819673b8/',
+      handle: 'Ismaël Patrick Choumi Nami'
+    },
     { label: 'Email', url: 'mailto:patrickchoumi@gmail.com', handle: 'patrickchoumi@gmail.com' }
   ]
 };
@@ -61,8 +68,8 @@ export const hero = {
     en: 'I build things<br />that <span class="emphasis">hold up</span>.'
   },
   lede: {
-    fr: 'Développeur. Je m’intéresse moins aux frameworks du mois qu’aux <em>fondations</em> : structures de données, accessibilité, performance réelle, code qu’on peut relire dans deux ans. Ce site en est un échantillon — une trentaine de kilo-octets de code, et aucune dépendance à l’exécution.',
-    en: 'Developer. Less interested in this month’s framework than in <em>foundations</em>: data structures, accessibility, real-world performance, code you can still read two years later. This site is a sample — about thirty kilobytes of code, zero runtime dependencies.'
+    fr: 'Élève ingénieur en génie informatique à Yaoundé. Je code depuis trois ans, par goût des <em>fondations</em> plus que des frameworks du mois : structures de données, accessibilité, performance réelle, code qu’on peut relire dans deux ans. Ce site en est un échantillon — une trentaine de kilo-octets de code, et aucune dépendance à l’exécution.',
+    en: 'Computer engineering student in Yaoundé. I have been coding for three years, drawn to <em>foundations</em> rather than this month’s framework: data structures, accessibility, real-world performance, code you can still read two years later. This site is a sample — about thirty kilobytes of code, zero runtime dependencies.'
   },
   // Le REPL de l'accueil tape ces paires. Volontairement des convictions,
   // pas des slogans : c'est le seul endroit du site qui parle à la première
@@ -88,114 +95,94 @@ export const about = {
   file: 'about.md',
   body: {
     fr: [
-      'Je développe depuis une dizaine d’années, surtout sur le web, avec des incursions régulières plus bas dans la pile — C, systèmes, outillage. Ce va-et-vient est délibéré : comprendre ce qui se passe sous l’abstraction change la façon dont on écrit au-dessus.',
+      'Je code depuis trois ans. J’ai commencé par le C et Linux, puis j’ai suivi la pente : Python, JavaScript, un peu de Java. Ce qui m’intéresse, c’est ce qui se passe sous l’abstraction — comprendre la couche du dessous change la façon dont on écrit celle du dessus.',
       'Mon travail tourne autour d’une idée simple : **la clarté est une fonctionnalité**. Un code lisible se corrige plus vite, une interface lisible se traverse sans notice, une donnée bien nommée survit à son auteur. Le reste — la vitesse, la robustesse, l’accessibilité — en découle souvent naturellement.',
       'En pratique, ça donne : peu de dépendances, des tests sur la logique qui compte, des URL réelles et partageables, un contraste vérifié, un fonctionnement au clavier. Rien de spectaculaire pris isolément. C’est l’accumulation qui fait la différence.',
-      'Quand je ne code pas, j’écris sur la pédagogie de la programmation — comment on enseigne *le pourquoi* avant *le comment*.'
+      'En dehors du code : les échecs, la lecture — romans et mangas — et le sport.'
     ],
     en: [
-      'I have been building software for about a decade, mostly on the web, with regular detours further down the stack — C, systems, tooling. The back and forth is deliberate: understanding what happens beneath an abstraction changes how you write above it.',
+      'I have been coding for three years. I started with C and Linux, then followed the slope: Python, JavaScript, a bit of Java. What interests me is what happens beneath the abstraction — understanding the layer below changes how you write the one above.',
       'My work revolves around one idea: **clarity is a feature**. Readable code is fixed faster, a readable interface needs no manual, well-named data outlives its author. The rest — speed, robustness, accessibility — usually follows.',
       'In practice: few dependencies, tests on the logic that matters, real shareable URLs, verified contrast, full keyboard operation. Nothing spectacular taken one at a time. The accumulation is what makes the difference.',
-      'When I am not coding, I write about teaching programming — how to teach *the why* before *the how*.'
+      'Away from the keyboard: chess, reading — novels and manga — and sport.'
     ]
   },
-  // Chiffres affichés dans le `neofetch` du shell et la fiche d'identité.
+  // Repris aussi par le `neofetch` du shell et la fiche de l'accueil.
   facts: [
-    { key: 'focus', label: { fr: 'Terrain', en: 'Focus' }, value: { fr: 'Web · systèmes · outils internes', en: 'Web · systems · internal tools' } },
-    { key: 'langues', label: { fr: 'Langues', en: 'Languages' }, value: { fr: 'Français (natif) · Anglais (courant)', en: 'French (native) · English (fluent)' } },
-    { key: 'method', label: { fr: 'Méthode', en: 'Method' }, value: { fr: 'Peu de dépendances, beaucoup de tests', en: 'Few dependencies, plenty of tests' } }
+    { key: 'formation', label: { fr: 'Formation', en: 'Studies' }, value: { fr: 'ENSPY — génie informatique, jusqu’en 2029', en: 'ENSPY — computer engineering, until 2029' } },
+    { key: 'terrain', label: { fr: 'Terrain', en: 'Ground' }, value: { fr: 'C · Python · JavaScript · Linux', en: 'C · Python · JavaScript · Linux' } },
+    { key: 'langues', label: { fr: 'Langues', en: 'Languages' }, value: { fr: 'Français · Anglais', en: 'French · English' } },
+    { key: 'loisirs', label: { fr: 'Loisirs', en: 'Off-hours' }, value: { fr: 'Échecs · romans et mangas · sport', en: 'Chess · novels and manga · sport' } }
   ]
 };
 
 // ─── Parcours ─────────────────────────────────────────────────────────
-// Rendu comme un `git log --graph` : chaque poste est un commit sur la
-// branche d'une vie professionnelle. Le plus récent en premier.
+// Un parcours de formation, rendu comme un `git log --graph` : chaque étape
+// est un commit. Le plus récent en premier.
 export const experience = [
   {
-    slug: 'independant',
-    company: { fr: 'Indépendant', en: 'Freelance' },
-    role: { fr: 'Développeur & consultant', en: 'Developer & consultant' },
-    start: '2022',
+    slug: 'enspy',
+    company: { fr: 'École Nationale Supérieure Polytechnique de Yaoundé', en: 'National Advanced School of Engineering, Yaoundé' },
+    role: { fr: 'Élève ingénieur — génie informatique', en: 'Engineering student — computer engineering' },
+    start: '2024',
     end: null, // null = en cours
-    place: { fr: 'À distance', en: 'Remote' },
+    place: { fr: 'Yaoundé, Cameroun', en: 'Yaoundé, Cameroon' },
     summary: {
-      fr: 'Conception et réalisation d’applications web pour des équipes produit qui ont besoin d’un socle solide plutôt que d’un prototype de plus.',
-      en: 'Design and delivery of web applications for product teams that need a solid base rather than one more prototype.'
+      fr: 'Cycle d’ingénieur en génie informatique, jusqu’en 2029. Les deux premières années sont un cycle préparatoire — mathématiques et sciences physiques — et l’informatique se mène en parallèle.',
+      en: 'Engineering degree in computer engineering, through 2029. The first two years are a preparatory cycle — mathematics and physical sciences — with computing carried on in parallel.'
     },
     highlights: {
       fr: [
-        'Refonte d’un back-office métier : temps de chargement divisé par quatre en supprimant le rendu côté client d’une table de 12 000 lignes.',
-        'Mise en place d’une CI qui refuse un build dont le contraste ou les tests d’accessibilité régressent.',
-        'Accompagnement d’équipes sur la dette technique : cartographie, priorisation, remboursement par tranches.'
+        'Cycle préparatoire 2024–2026 : mathématiques et sciences physiques.',
+        'Informatique menée en parallèle du programme : C, Python, JavaScript.',
+        'HTML, CSS et LaTeX appris en autodidacte.'
       ],
       en: [
-        'Rebuilt an internal back-office: load time cut fourfold by removing client-side rendering of a 12,000-row table.',
-        'Set up a CI pipeline that rejects any build where contrast or accessibility tests regress.',
-        'Coached teams on technical debt: mapping, prioritising, paying it down in slices.'
+        'Preparatory cycle 2024–2026: mathematics and physical sciences.',
+        'Computing carried alongside the curriculum: C, Python, JavaScript.',
+        'HTML, CSS and LaTeX learned self-taught.'
       ]
     },
-    stack: ['TypeScript', 'Node', 'PostgreSQL', 'Vite', 'Playwright']
+    stack: ['C', 'Python', 'JavaScript', 'HTML', 'CSS', 'LaTeX']
   },
   {
-    slug: 'scaleup-produit',
-    company: { fr: 'Scale-up produit', en: 'Product scale-up' },
-    role: { fr: 'Développeur front senior', en: 'Senior front-end developer' },
-    start: '2019',
-    end: '2022',
-    place: { fr: 'Paris', en: 'Paris' },
+    slug: 'uy1',
+    company: { fr: 'Université de Yaoundé I', en: 'University of Yaoundé I' },
+    role: { fr: 'Filière informatique', en: 'Computer science' },
+    start: '2023',
+    end: '2024',
+    place: { fr: 'Yaoundé, Cameroun', en: 'Yaoundé, Cameroon' },
     summary: {
-      fr: 'Équipe plateforme d’un produit SaaS B2B. Design system, performance, accessibilité — les fondations que les équipes fonctionnelles consomment tous les jours.',
-      en: 'Platform team of a B2B SaaS product. Design system, performance, accessibility — the foundations feature teams consume daily.'
+      fr: 'Une année consacrée aux fondations : le C d’abord, puis Java, et Linux comme environnement de travail quotidien plutôt que comme sujet d’étude.',
+      en: 'A year spent on foundations: C first, then Java, with Linux as a daily working environment rather than a subject.'
     },
     highlights: {
       fr: [
-        'Design system maison adopté par cinq équipes : tokens, composants accessibles, documentation vivante.',
-        'Budget de performance inscrit dans la CI — le poids du bundle est devenu une décision, pas un accident.',
-        'Mise en conformité RGAA d’un parcours critique, validée par un audit externe.'
+        'Maîtrise du C : pointeurs, mémoire, compilation séparée.',
+        'Java : types, objets, bibliothèque standard.',
+        'Linux au quotidien — shell, permissions, outillage.'
       ],
       en: [
-        'In-house design system adopted by five teams: tokens, accessible components, living documentation.',
-        'Performance budget enforced in CI — bundle weight became a decision, not an accident.',
-        'Brought a critical user journey into accessibility compliance, validated by an external audit.'
+        'C in depth: pointers, memory, separate compilation.',
+        'Java: types, objects, standard library.',
+        'Linux daily — shell, permissions, tooling.'
       ]
     },
-    stack: ['TypeScript', 'React', 'CSS', 'Storybook', 'Web Vitals']
-  },
-  {
-    slug: 'agence',
-    company: { fr: 'Agence technique', en: 'Technical agency' },
-    role: { fr: 'Développeur full-stack', en: 'Full-stack developer' },
-    start: '2016',
-    end: '2019',
-    place: { fr: 'Lyon', en: 'Lyon' },
-    summary: {
-      fr: 'Beaucoup de projets, beaucoup de contextes. L’école du « livrer pour de vrai » : contraintes de budget, de délai, et des utilisateurs qui ne ressemblent pas à l’équipe.',
-      en: 'Many projects, many contexts. The school of actually shipping: budget and deadline constraints, and users who look nothing like the team.'
-    },
-    highlights: {
-      fr: [
-        'Une quinzaine d’applications livrées, du site éditorial à l’outil métier interne.',
-        'Standardisation du socle de départ des projets : gain de deux semaines par mission.',
-        'Formation des juniors sur les fondamentaux du web (HTTP, cache, accessibilité).'
-      ],
-      en: [
-        'Around fifteen applications delivered, from editorial sites to internal business tools.',
-        'Standardised the project starter kit: two weeks saved per engagement.',
-        'Trained junior developers on web fundamentals (HTTP, caching, accessibility).'
-      ]
-    },
-    stack: ['JavaScript', 'PHP', 'MySQL', 'Docker']
+    stack: ['C', 'Java', 'Linux']
   }
 ];
 
 // ─── Projets ──────────────────────────────────────────────────────────
+// `status` : 'live' | 'wip' | 'planned' | 'archived'.
+// « planned » existe pour ne pas avoir à mentir : un projet qui n'a pas
+// encore commencé n'est ni en ligne ni en cours. Les descriptions ci-dessous
+// décrivent donc une intention, pas un résultat — c'est le statut qui le dit.
 export const projects = [
   {
     slug: 'theory',
     name: 'Theory',
-    year: '2025',
-    status: 'live', // 'live' | 'wip' | 'archived'
+    year: '2026',
+    status: 'wip',
     tagline: {
       fr: 'La théorie de la programmation, structurée pour durer.',
       en: 'Programming theory, structured to last.'
@@ -225,14 +212,17 @@ export const projects = [
     ],
     stack: ['JavaScript', 'Vite', 'Node', 'PostgreSQL', 'PWA'],
     links: [
-      { label: { fr: 'Le projet', en: 'The project' }, url: 'https://github.com/patrickchoumi' }
+      { label: { fr: 'Dépôt', en: 'Repository' }, url: 'https://github.com/PatrickChoumi/theory' }
     ]
   },
   {
     slug: 'portfolio',
-    name: 'Ce portfolio',
+    // Un nom de projet est une chaîne nue : il s'affiche tel quel dans les
+    // deux langues. « Ce portfolio » laissait donc du français sur la page
+    // anglaise.
+    name: 'Portfolio',
     year: '2026',
-    status: 'live',
+    status: 'wip',
     tagline: {
       fr: 'Un portfolio qui est aussi un système de fichiers.',
       en: 'A portfolio that is also a filesystem.'
@@ -262,14 +252,14 @@ export const projects = [
     ],
     stack: ['JavaScript', 'Vite', 'CSS'],
     links: [
-      { label: { fr: 'Code source', en: 'Source' }, url: 'https://github.com/patrickchoumi/portfolio' }
+      { label: { fr: 'Dépôt', en: 'Repository' }, url: 'https://github.com/PatrickChoumi/portfolio' }
     ]
   },
   {
     slug: 'atlas',
     name: 'Atlas',
-    year: '2024',
-    status: 'wip',
+    year: '2026',
+    status: 'planned',
     tagline: {
       fr: 'Cartographier la dette technique d’un dépôt, sans jugement.',
       en: 'Mapping a repository’s technical debt, without judgement.'
@@ -300,8 +290,8 @@ export const projects = [
   {
     slug: 'ttyf',
     name: 'ttyf',
-    year: '2023',
-    status: 'live',
+    year: '2026',
+    status: 'planned',
     tagline: {
       fr: 'Un formateur de tableaux pour terminaux, en 200 lignes.',
       en: 'A table formatter for terminals, in 200 lines.'
@@ -332,34 +322,32 @@ export const projects = [
 ];
 
 // ─── Stack ────────────────────────────────────────────────────────────
-// Pas de niveau chiffré : « quatre sur cinq » ne veut rien dire pour celui qui
-// lit, et beaucoup trop pour celui qui écrit. Chaque entrée porte à la place
-// une phrase qui dit ce qu'on en sait vraiment — plus honnête, et plus utile.
+// Pas de niveau chiffré : chaque entrée porte à la place une phrase qui dit
+// ce qu'on en sait vraiment — plus honnête, et plus utile.
 export const stack = [
   {
     group: { fr: 'Langages', en: 'Languages' },
     items: [
-      { name: 'JavaScript / TypeScript', note: { fr: 'Le terrain principal, depuis ES5.', en: 'Main ground, since ES5.' } },
-      { name: 'C', note: { fr: 'Assez pour comprendre ce qui se passe en dessous.', en: 'Enough to understand what happens underneath.' } },
-      { name: 'Python', note: { fr: 'Outillage, scripts, prototypage.', en: 'Tooling, scripts, prototyping.' } },
-      { name: 'SQL', note: { fr: 'Modélisation et lecture de plans d’exécution.', en: 'Modelling and reading query plans.' } }
+      { name: 'C', note: { fr: 'Le premier, et celui qui explique les autres.', en: 'The first one, and the one that explains the rest.' } },
+      { name: 'Python', note: { fr: 'Scripts, prototypes, algorithmique.', en: 'Scripts, prototypes, algorithms.' } },
+      { name: 'JavaScript', note: { fr: 'Le terrain principal aujourd’hui.', en: 'The main ground today.' } },
+      { name: 'Java', note: { fr: 'Types, objets, bibliothèque standard.', en: 'Types, objects, standard library.' } }
     ]
   },
   {
     group: { fr: 'Interface', en: 'Interface' },
     items: [
-      { name: { fr: 'CSS moderne', en: 'Modern CSS' }, note: { fr: 'Grid, cascade layers, color-mix, container queries.', en: 'Grid, cascade layers, color-mix, container queries.' } },
-      { name: { fr: 'Accessibilité (WCAG/RGAA)', en: 'Accessibility (WCAG)' }, note: { fr: 'Clavier, ARIA, contraste — vérifiés, pas supposés.', en: 'Keyboard, ARIA, contrast — verified, not assumed.' } },
-      { name: { fr: 'Design system', en: 'Design systems' }, note: { fr: 'Tokens, composants, documentation vivante.', en: 'Tokens, components, living documentation.' } }
+      { name: { fr: 'HTML et CSS', en: 'HTML and CSS' }, note: { fr: 'Grid, cascade layers, color-mix — appris en autodidacte.', en: 'Grid, cascade layers, color-mix — self-taught.' } },
+      { name: { fr: 'Accessibilité', en: 'Accessibility' }, note: { fr: 'Clavier, ARIA, contraste — vérifiés, pas supposés.', en: 'Keyboard, ARIA, contrast — verified, not assumed.' } },
+      { name: 'LaTeX', note: { fr: 'Comptes rendus et documents de cours.', en: 'Lab reports and course documents.' } }
     ]
   },
   {
-    group: { fr: 'Plateforme', en: 'Platform' },
+    group: { fr: 'Environnement', en: 'Environment' },
     items: [
-      { name: 'Node', note: { fr: 'Services, CLI, outillage de build.', en: 'Services, CLIs, build tooling.' } },
-      { name: 'PostgreSQL', note: { fr: 'Schémas, index, migrations sans interruption.', en: 'Schemas, indexes, zero-downtime migrations.' } },
-      { name: 'CI/CD', note: { fr: 'Des garanties automatiques, pas des intentions.', en: 'Automatic guarantees, not intentions.' } },
-      { name: { fr: 'Tests (unitaires, E2E)', en: 'Tests (unit, E2E)' }, note: { fr: 'Sur la logique qui casse, pas sur les getters.', en: 'On logic that breaks, not on getters.' } }
+      { name: 'Linux', note: { fr: 'Shell, permissions, outillage au quotidien.', en: 'Shell, permissions, daily tooling.' } },
+      { name: 'Git', note: { fr: 'Branches, historique lisible, retours en arrière.', en: 'Branches, readable history, going back.' } },
+      { name: { fr: 'Tests', en: 'Testing' }, note: { fr: 'Sur la logique qui casse, pas sur les getters.', en: 'On logic that breaks, not on getters.' } }
     ]
   }
 ];
@@ -393,8 +381,8 @@ export const principles = [
 export const contact = {
   title: { fr: 'Contact', en: 'Contact' },
   lede: {
-    fr: 'Une mission, une question technique, ou juste envie d’en discuter : le plus simple reste l’email. Je réponds sous quelques jours ouvrés.',
-    en: 'A project, a technical question, or just a conversation: email is simplest. I answer within a few business days.'
+    fr: 'Un projet, une question technique, ou juste envie d’en discuter : le plus simple reste l’email. Je réponds sous quelques jours.',
+    en: 'A project, a technical question, or just a conversation: email is simplest. I answer within a few days.'
   },
   note: {
     fr: 'Ce site ne dépose aucun cookie, ne charge aucun traceur, et n’envoie rien nulle part. Le thème, la langue et l’historique du shell restent dans ton navigateur.',

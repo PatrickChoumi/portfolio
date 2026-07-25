@@ -51,6 +51,9 @@ function period(job, lang) {
 const STATUS_LABEL = {
   live: { fr: 'en ligne', en: 'live' },
   wip: { fr: 'en cours', en: 'in progress' },
+  // « À venir » évite d'avoir à mentir : un projet qui n'a pas commencé
+  // n'est ni en ligne ni en cours, et sa description est une intention.
+  planned: { fr: 'à venir', en: 'planned' },
   archived: { fr: 'archivé', en: 'archived' }
 };
 
@@ -153,9 +156,9 @@ function projectsReadme(lang) {
   return out.join('\n');
 }
 
-// Un glossaire, pas un palmarès : le nom, puis la phrase qui dit ce qu'on en
-// sait vraiment. Les jauges ont été retirées — « quatre sur cinq » ne veut
-// rien dire pour celui qui lit, et beaucoup trop pour celui qui écrit.
+// Un glossaire : le nom, puis la phrase qui dit ce qu'on en sait vraiment.
+// Pas de note chiffrée — une phrase en dit plus, et n'invente pas une
+// précision qui n'existe pas.
 function stackFile(group, lang) {
   const names = group.items.map((i) => pick(i.name, lang));
   const width = Math.max(...names.map((n) => n.length));
@@ -170,7 +173,7 @@ function stackFile(group, lang) {
 // l'impression. Une seule composition, trois usages.
 function resumeFile(lang) {
   const out = [
-    `${identity.name} — ${pick(identity.role, lang)}`,
+    `${identity.fullName || identity.name} — ${pick(identity.role, lang)}`,
     `${pick(identity.location, lang)} · ${identity.email}`,
     rule(),
     '',
@@ -219,9 +222,14 @@ export function buildFs(lang = 'fr') {
       )
     ], { section: 'projects' }),
 
-    dir('stack', stack.map((g) =>
-      file(`${slugify(pick(g.group, 'fr'))}.txt`, stackFile(g, lang), { section: 'stack' })
-    ), { section: 'stack' }),
+    dir('stack', stack.map((g) => {
+      // Le nom de fichier est tiré de l'anglais, et pas de la langue courante :
+      // un chemin doit rester le même quand on bascule FR/EN, sans quoi un lien
+      // partagé pointerait dans le vide. L'anglais parce que tout le reste de
+      // l'arborescence l'est déjà (`about.md`, `projects/`, `contact.md`).
+      const slug = slugify(pick(g.group, 'en'));
+      return file(`${slug}.txt`, stackFile(g, lang), { section: 'stack', anchor: `stack-${slug}` });
+    }), { section: 'stack' }),
 
     // Fichier caché — visible seulement avec `ls -a`. Le genre de détail
     // que personne n'a demandé et que quelqu'un finira par trouver.
