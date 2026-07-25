@@ -1,13 +1,39 @@
 # patrickchoumi/portfolio
 
-Un portfolio qui est aussi un système de fichiers.
+**Deux propositions, deux partis pris opposés.** Le contenu est comparable ;
+tout le reste diverge. Elles cohabitent dans ce dépôt pour être comparées
+côte à côte — l'une finira par être publiée, pas les deux.
+
+| | [**Terminal**](#un-portfolio-qui-est-aussi-un-système-de-fichiers) (ce dossier) | [**Document**](minimal/) (`minimal/`) |
+| --- | --- | --- |
+| Idée | Le portfolio est un système de fichiers explorable | Le portfolio est un document imprimé qui se trouve être à l'écran |
+| Interaction | Terminal réel, palette, routes, thème, bilingue à chaud | Dépli natif `<details>`, deux pages, un lien |
+| Typographie | JetBrains Mono + Inter, deux voix | Newsreader seul, une graisse |
+| Couleur | Un accent vert phosphore, thème clair/nuit | Aucune. Encre sur papier |
+| JavaScript | 24 Ko gzip | **0 octet** |
+| Outillage | Vite | Aucun — 100 lignes de Node |
+| Poids total | ~90 Ko gzip | 7 Ko gzip par page, 91 Ko avec les polices |
+| Tests | 46 unitaires + 18 navigateur | 21 unitaires |
+
+<table>
+<tr>
+<td width="50%"><img src="docs/captures/accueil-clair.png" alt="Variante terminal"></td>
+<td width="50%"><img src="docs/captures/minimal-haut.png" alt="Variante document"></td>
+</tr>
+<tr><td align="center"><em>Terminal</em></td><td align="center"><em>Document</em></td></tr>
+</table>
+
+Ce qui suit documente la variante **terminal**. Pour l'autre, voir
+[`minimal/README.md`](minimal/README.md).
+
+---
+
+## Un portfolio qui est aussi un système de fichiers
 
 Deux vues sur exactement la même matière : une page éditoriale qui se lit
 normalement, et un terminal réel (touche <kbd>`</kbd>) où le contenu devient
 une arborescence qu'on explore à la commande. Ce n'est pas une décoration :
 `cd projects` déplace la page, cliquer sur un projet déplace le shell.
-
-![Accueil](docs/captures/accueil-clair.png)
 
 ---
 

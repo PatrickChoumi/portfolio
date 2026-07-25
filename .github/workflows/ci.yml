@@ -12,6 +12,23 @@ on:
   pull_request:
 
 jobs:
+  # La variante « document » (minimal/) n'a aucune dépendance : rien à
+  # installer, rien à mettre en cache. Elle se vérifie en quelques secondes.
+  minimal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: minimal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit du contenu et du HTML produit
+        run: node --test "tests/*.test.mjs"
+      - name: Build
+        run: node build.mjs
+
   build-test:
     runs-on: ubuntu-latest
     steps:
