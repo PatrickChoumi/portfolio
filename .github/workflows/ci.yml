@@ -1,4 +1,4 @@
-# CI — sans elle, les 46 tests unitaires et les 18 vérifications navigateur
+# CI — sans elle, les 46 tests unitaires et les 19 vérifications navigateur
 # ne tournent jamais automatiquement, et une garantie qui ne s'exécute pas
 # s'érode en silence. Ici, un commit qui casse un test, l'audit de contenu,
 # le build, ou qui fait fuiter une requête vers un hôte tiers, fait échouer
@@ -12,23 +12,6 @@ on:
   pull_request:
 
 jobs:
-  # La variante « document » (minimal/) n'a aucune dépendance : rien à
-  # installer, rien à mettre en cache. Elle se vérifie en quelques secondes.
-  minimal:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: minimal
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Audit du contenu et du HTML produit
-        run: node --test "tests/*.test.mjs"
-      - name: Build
-        run: node build.mjs
-
   build-test:
     runs-on: ubuntu-latest
     steps:

@@ -34,8 +34,7 @@ export function initShell(hooks) {
     prompt: document.getElementById('term-prompt'),
     close: document.getElementById('term-close'),
     hint: document.getElementById('term-hint'),
-    statusPath: document.getElementById('status-path'),
-    statusMode: document.getElementById('status-mode')
+    barPath: document.getElementById('term-bar-path')
   };
   if (!el.term) return null;
 
@@ -91,7 +90,7 @@ export function initShell(hooks) {
 
   function refreshPrompt() {
     el.prompt.innerHTML = promptHtml();
-    if (el.statusPath) el.statusPath.textContent = pathLabel();
+    if (el.barPath) el.barPath.textContent = pathLabel();
   }
 
   // ─── Exécution ──────────────────────────────────────────────────────
@@ -266,13 +265,12 @@ export function initShell(hooks) {
     if (open) setTimeout(() => el.input.focus(), 0);
   });
 
-  // Le libellé du mode est rendu ici, pas dans le HTML : sinon il resterait
-  // en français sur une page basculée en anglais avant la première ouverture
-  // du terminal.
+  // L'invite et l'indice sont rendus ici, pas dans le HTML : sinon ils
+  // resteraient en français sur une page basculée en anglais avant la
+  // première ouverture du terminal.
   function refreshChrome() {
     refreshPrompt();
     if (el.hint) el.hint.textContent = t('term.hint');
-    el.statusMode.textContent = open ? 'SHELL' : (getLang() === 'en' ? 'READ' : 'LIRE');
   }
   refreshChrome();
 

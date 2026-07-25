@@ -61,9 +61,6 @@ export function colorize(content) {
     if (/^\s*\d+\.\s/.test(l)) return html(escapeHtml(l).replace(/^(\s*)(\d+\.)/, '$1<span class="num">$2</span>'));
     if (l.startsWith('$ ')) return html(`<span class="p">$</span> <span class="kw">${escapeHtml(l.slice(2))}</span>`);
     if (/^\*\s/.test(l)) return html(`<span class="p">*</span>${escapeHtml(l.slice(1))}`);
-    if (/^https?:|@/.test(l) === false && /█|░/.test(l)) {
-      return html(escapeHtml(l).replace(/([█░]+)/g, '<span class="meter">$1</span>'));
-    }
     if (/https?:\/\//.test(l)) {
       return html(escapeHtml(l).replace(/(https?:\/\/[^\s]+)/g, '<a class="lnk" href="$1" target="_blank" rel="noopener">$1</a>'));
     }

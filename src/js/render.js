@@ -1,14 +1,17 @@
 // Rendu de la page à partir des données.
 //
-// Rien de ce qui suit n'est écrit en dur dans index.html : le HTML n'est
-// qu'une charpente de conteneurs vides. Changer profile.js change la page,
-// le terminal, la palette et le CV imprimé d'un coup.
+// Rien n'est écrit en dur dans index.html : le HTML n'est qu'une charpente de
+// conteneurs vides. Changer profile.js change la page, le terminal, la palette
+// et le CV imprimé d'un coup.
+//
+// Discipline de rendu, la même partout : des rangées séparées par un filet,
+// jamais de carte ; du texte, jamais d'étiquette encadrée ; l'accent
+// uniquement sur ce qui est actif ou chiffré.
 
 import { identity, hero, about, experience, projects, stack, principles, contact } from '../data/profile.js';
 import { buildFs, shortHash } from '../data/fs.js';
 import { t, tx, getLang } from './i18n.js';
 
-// ─── Utilitaires ──────────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 
 export function esc(str) {
@@ -16,7 +19,7 @@ export function esc(str) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// Balisage inline minimal accepté dans les données : **gras**, *italique*,
+// Balisage inline minimal accepté dans les données : **appuyé**, *italique*,
 // `code`. Volontairement pas de moteur Markdown — trois règles suffisent, et
 // l'échappement passe AVANT, donc rien d'injectable ne survit.
 export function inline(str) {
@@ -26,69 +29,38 @@ export function inline(str) {
     .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
-const meterHtml = (level, max = 5) =>
-  `<span class="skill-meter" aria-hidden="true">${'█'.repeat(level)}<span class="off">${'░'.repeat(max - level)}</span></span>`
-  + `<span class="visually-hidden">${level}/${max}</span>`;
-
 const STATUS_LABEL = {
   live: { fr: 'en ligne', en: 'live' },
   wip: { fr: 'en cours', en: 'in progress' },
   archived: { fr: 'archivé', en: 'archived' }
 };
 
-const periodOf = (job) => `${job.start} → ${job.end || (getLang() === 'en' ? 'now' : 'aujourd’hui')}`;
+const periodOf = (job) => `${job.start} — ${job.end || (getLang() === 'en' ? 'now' : 'aujourd’hui')}`;
 
-// ─── Barre latérale : l'arborescence ──────────────────────────────────
-// L'explorateur reprend la structure du système de fichiers virtuel, pour
-// que la page et le shell parlent exactement du même objet.
-const TREE_ITEMS = [
-  { icon: '◆', label: 'README.md', section: 'home', depth: 0 },
-  { icon: '·', label: 'about.md', section: 'about', depth: 0 },
-  { icon: '▸', label: 'experience/', section: 'experience', depth: 0, count: () => experience.length },
-  { icon: '▸', label: 'projects/', section: 'projects', depth: 0, count: () => projects.length },
-  { icon: '▸', label: 'stack/', section: 'stack', depth: 0, count: () => stack.length },
-  { icon: '·', label: 'contact.md', section: 'contact', depth: 0 }
+// ─── Sommaire ─────────────────────────────────────────────────────────
+// Des noms de fichiers, et un filet d'accent sur celui qu'on lit. Pas
+// d'icônes, pas de compteurs : le sommaire n'a rien à démontrer.
+const TREE = [
+  { label: 'README.md', section: 'home' },
+  { label: 'about.md', section: 'about' },
+  { label: 'experience/', section: 'experience' },
+  { label: 'projects/', section: 'projects' },
+  { label: 'stack/', section: 'stack' },
+  { label: 'contact.md', section: 'contact' }
 ];
 
 export function renderTree(route) {
   const el = $('#tree');
   if (!el) return;
-  const rows = TREE_ITEMS.map((item) => {
+
+  el.innerHTML = TREE.map((item) => {
     const active = route.section === item.section;
-    const count = item.count ? `<span class="tree-count">${item.count()}</span>` : '';
-    return `<button class="tree-item${active ? ' is-active' : ''}" data-nav="${item.section}" data-depth="${item.depth}"${active ? ' aria-current="page"' : ''}>
-      <span class="tree-icon" aria-hidden="true">${item.icon}</span><span>${esc(item.label)}</span>${count}
-    </button>`;
+    const row = `<button class="tree-item${active ? ' is-active' : ''}" data-nav="${item.section}" data-depth="0"${active ? ' aria-current="page"' : ''}>${esc(item.label)}</button>`;
+    // Les projets se déplient seulement quand on est dans la section : le
+    // sommaire reste court partout ailleurs.
+    if (item.section !== 'projects' || route.section !== 'projects') return row;
+    return row + projects.map((p) => `<button class="tree-item${route.slug === p.slug ? ' is-active' : ''}" data-nav="projects" data-slug="${esc(p.slug)}" data-depth="1">${esc(p.slug)}/</button>`).join('');
   }).join('');
-
-  // Sous-niveau : les projets se déplient quand on est dans la section.
-  const subProjects = route.section === 'projects'
-    ? projects.map((p) => `<button class="tree-item${route.slug === p.slug ? ' is-active' : ''}" data-nav="projects" data-slug="${p.slug}" data-depth="1">
-        <span class="tree-icon" aria-hidden="true">·</span><span>${esc(p.slug)}/</span>
-      </button>`).join('')
-    : '';
-
-  el.innerHTML = `<p class="tree-label">${esc(t('tree.title'))}</p>` + rows +
-    (subProjects ? `<div id="tree-projects">${subProjects}</div>` : '');
-
-  // Les sous-projets doivent apparaître SOUS projects/ et non en fin de liste.
-  const sub = $('#tree-projects');
-  const parent = el.querySelector('.tree-item[data-nav="projects"]:not([data-slug])');
-  if (sub && parent) parent.after(sub);
-}
-
-// ─── Onglets de buffer ────────────────────────────────────────────────
-export function renderTabs(route) {
-  const el = $('#tabs');
-  if (!el) return;
-  const sections = [...document.querySelectorAll('main .section')];
-  el.innerHTML = sections.map((s) => {
-    const active = s.id === route.section;
-    return `<button class="buffer-tab${active ? ' is-active' : ''}" role="tab" aria-selected="${active}" data-nav="${s.id}">
-      <span class="buffer-tab-dot" aria-hidden="true"></span>${esc(s.dataset.file)}
-    </button>`;
-  }).join('');
-  el.querySelector('.buffer-tab.is-active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 // ─── Accueil ──────────────────────────────────────────────────────────
@@ -108,13 +80,14 @@ function renderHome() {
   $('#hero-title').innerHTML = tx(hero.title);
   $('#hero-lede').innerHTML = tx(hero.lede);
 
+  // Chaque fragment est un <span> : deux nœuds de texte encadrant un
+  // séparateur masqué fusionneraient en un seul élément flex, et la ligne
+  // refuserait de s'empiler sur mobile.
   $('#hero-identity').innerHTML = [
-    `<strong>${esc(identity.name)}</strong>`,
-    `<span class="sep">·</span>`,
-    esc(tx(identity.role)),
-    `<span class="sep">·</span>`,
-    esc(tx(identity.location))
-  ].join(' ');
+    `<span>${esc(identity.name)}</span>`,
+    '<span class="sep">—</span>',
+    `<span>${esc(tx(identity.location))}</span>`
+  ].join('');
 
   $('#principles').innerHTML = principles.map((p, i) => `
     <li class="principle">
@@ -126,10 +99,8 @@ function renderHome() {
     </li>`).join('');
 
   $('#facts').innerHTML = about.facts.map((f) => `
-    <div class="fact">
-      <span class="fact-key">${esc(tx(f.label))}</span>
-      <span class="fact-val">${esc(tx(f.value))}</span>
-    </div>`).join('');
+    <dt>${esc(tx(f.label))}</dt>
+    <dd>${esc(tx(f.value))}</dd>`).join('');
 }
 
 // ─── À propos ─────────────────────────────────────────────────────────
@@ -138,22 +109,21 @@ function renderAbout() {
   $('#about-body').innerHTML = tx(about.body).map((p) => `<p>${inline(p)}</p>`).join('');
 }
 
-// ─── Parcours — le git log ────────────────────────────────────────────
+// ─── Parcours ─────────────────────────────────────────────────────────
 function renderExperience() {
   $('#gitlog').innerHTML = experience.map((job, i) => `
     <article class="commit${i === 0 ? ' is-head' : ''}" id="job-${esc(job.slug)}">
-      <div class="commit-head">
+      <p class="commit-meta">
         <span class="commit-hash">${shortHash(job.slug)}</span>
-        <span class="commit-period">${esc(periodOf(job))}</span>
-        ${i === 0 ? '<span class="commit-ref">HEAD</span>' : ''}
-      </div>
+        <span>${esc(periodOf(job))}</span>
+        <span>${esc(tx(job.place))}</span>
+      </p>
       <h2 class="commit-title">${esc(tx(job.role))} <span class="commit-company">@ ${esc(tx(job.company))}</span></h2>
-      <p class="commit-place">${esc(tx(job.place))}</p>
       <p class="commit-summary">${inline(tx(job.summary))}</p>
       <ul class="diff">
         ${tx(job.highlights).map((h) => `<li><span class="diff-plus" aria-hidden="true">+</span><span>${inline(h)}</span></li>`).join('')}
       </ul>
-      <ul class="chips">${job.stack.map((s) => `<li class="chip">${esc(s)}</li>`).join('')}</ul>
+      <p class="tags">${esc(job.stack.join(' · '))}</p>
     </article>`).join('');
 }
 
@@ -161,23 +131,18 @@ function renderExperience() {
 function projectListHtml() {
   return `
     <div class="section-head">
-      <p class="section-kicker">projects/</p>
+      <p class="kicker">projects/</p>
       <h1 class="section-title">${esc(t('projects.title'))}</h1>
       <p class="section-lede">${esc(t('projects.lede'))}</p>
     </div>
     <div class="project-list">
       ${projects.map((p) => `
-        <button class="project-card" data-nav="projects" data-slug="${esc(p.slug)}">
-          <span class="project-top">
-            <span class="project-name">${esc(p.name)}</span>
-            <span class="project-year">${esc(p.year)}</span>
-            <span class="project-go" aria-hidden="true">→</span>
-          </span>
-          <span class="project-tagline">${esc(tx(p.tagline))}</span>
-          <span class="project-top">
-            <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
-            <span class="chips">${p.stack.slice(0, 4).map((s) => `<span class="chip">${esc(s)}</span>`).join('')}</span>
-          </span>
+        <button class="project-row" data-nav="projects" data-slug="${esc(p.slug)}">
+          <span class="project-year">${esc(p.year)}</span>
+          <span class="project-name">${esc(p.name)}</span>
+          <span class="project-go" aria-hidden="true">→</span>
+          <span class="project-line">${esc(tx(p.tagline))}</span>
+          <span class="project-meta">${esc(tx(STATUS_LABEL[p.status]))} · ${esc(p.stack.join(' · '))}</span>
         </button>`).join('')}
     </div>`;
 }
@@ -185,38 +150,28 @@ function projectListHtml() {
 function projectDetailHtml(p) {
   return `
     <div class="project-detail">
-      <button class="project-back" data-nav="projects">
+      <button class="back" data-nav="projects">
         <span aria-hidden="true">←</span> ${esc(t('projects.back'))}
       </button>
       <div class="section-head">
-        <p class="section-kicker">projects/${esc(p.slug)}/README.md</p>
+        <p class="kicker">projects/${esc(p.slug)}</p>
         <h1 class="section-title">${esc(p.name)}</h1>
         <p class="section-lede">${esc(tx(p.tagline))}</p>
       </div>
 
-      <p class="project-top" style="margin-bottom: var(--space-6)">
-        <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
-        <span class="project-year">${esc(p.year)}</span>
-      </p>
+      <p class="tags">${esc(p.year)} · <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span></p>
 
-      <div class="prose"><p>${inline(tx(p.summary))}</p></div>
+      <div class="prose" style="margin-top: var(--space-6)"><p>${inline(tx(p.summary))}</p></div>
 
-      ${p.metrics?.length ? `<div class="metrics">${p.metrics.map((m) => `
-        <div class="metric">
-          <div class="metric-value">${esc(m.value)}</div>
-          <div class="metric-label">${esc(tx(m.label))}</div>
-        </div>`).join('')}</div>` : ''}
+      ${p.metrics?.length ? `<p class="metrics">${p.metrics.map((m) =>
+        `<b>${esc(m.value)}</b> ${esc(tx(m.label))}`).join('<span class="sep">·</span>')}</p>` : ''}
 
       <section class="block">
         <h2 class="block-title">${esc(t('highlights.title'))}</h2>
         <ul class="diff">
           ${tx(p.highlights).map((h) => `<li><span class="diff-plus" aria-hidden="true">+</span><span>${inline(h)}</span></li>`).join('')}
         </ul>
-      </section>
-
-      <section class="block">
-        <h2 class="block-title">Stack</h2>
-        <ul class="chips">${p.stack.map((s) => `<li class="chip">${esc(s)}</li>`).join('')}</ul>
+        <p class="tags">${esc(p.stack.join(' · '))}</p>
         ${p.links.length ? `<div class="links-row">${p.links.map((l) => `
           <a class="cta" href="${esc(l.url)}" target="_blank" rel="noopener">
             ${esc(tx(l.label))} <span class="cta-arrow" aria-hidden="true">↗</span>
@@ -226,25 +181,25 @@ function projectDetailHtml(p) {
 }
 
 function renderProjects(route) {
-  const el = $('#projects-body');
   const project = route.slug ? projects.find((p) => p.slug === route.slug) : null;
-  el.innerHTML = project ? projectDetailHtml(project) : projectListHtml();
+  $('#projects-body').innerHTML = project ? projectDetailHtml(project) : projectListHtml();
 }
 
 // ─── Stack ────────────────────────────────────────────────────────────
+// Un glossaire, pas un palmarès : chaque entrée porte une phrase qui dit ce
+// que l'auteur en sait vraiment. C'est plus honnête qu'une jauge, et plus
+// informatif — « quatre sur cinq » ne veut rien dire pour celui qui lit.
 function renderStack() {
-  $('#stack-body').innerHTML = stack.map((g) => `
-    <section class="stack-group">
-      <h2 class="stack-group-title">${esc(tx(g.group))}</h2>
-      ${g.items.map((i) => `
-        <div class="skill">
-          <div class="skill-top">
-            <span class="skill-name">${esc(i.name)}</span>
-            ${meterHtml(i.level)}
-          </div>
-          <p class="skill-note">${esc(tx(i.note))}</p>
-        </div>`).join('')}
-    </section>`).join('');
+  $('#stack-body').innerHTML = `<div class="stack-list">${stack.map((g) => `
+    <div class="stack-group">
+      <span class="stack-label">${esc(tx(g.group))}</span>
+      <div class="stack-items">
+        ${g.items.map((i) => `<p class="stack-item">
+          <span class="stack-item-name">${esc(tx(i.name))}</span>
+          <span class="stack-item-note">${esc(tx(i.note))}</span>
+        </p>`).join('')}
+      </div>
+    </div>`).join('')}</div>`;
 }
 
 // ─── Contact ──────────────────────────────────────────────────────────
@@ -253,28 +208,13 @@ function renderContact() {
   $('#contact-lede').textContent = tx(contact.lede);
   $('#contact-links').innerHTML = identity.links.map((l) => `
     <a class="contact-link" href="${esc(l.url)}"${l.url.startsWith('mailto:') ? '' : ' target="_blank" rel="noopener"'}>
-      <span class="contact-link-label">${esc(l.label)}</span>
-      <span class="contact-link-handle">${esc(l.handle)}</span>
-      <span class="contact-link-go" aria-hidden="true">↗</span>
+      <span class="contact-label">${esc(l.label)}</span>
+      <span class="contact-handle">${esc(l.handle)}</span>
+      <span class="contact-go" aria-hidden="true">↗</span>
     </a>`).join('');
   $('#contact-note').textContent = tx(contact.note);
   $('#foot-left').textContent = t('foot.built');
   $('#foot-right').textContent = `© ${new Date().getFullYear()} ${identity.name}`;
-}
-
-// ─── Gouttière de numéros de ligne ────────────────────────────────────
-// Purement décorative (aria-hidden) : on remplit chaque gouttière d'assez de
-// numéros pour couvrir la hauteur réelle de son buffer, le débordement est
-// masqué en CSS. Recalculée au redimensionnement et après chaque rendu.
-export function paintGutters() {
-  document.querySelectorAll('.section.is-active .buffer').forEach((buffer) => {
-    const gutter = buffer.querySelector('.gutter');
-    const body = buffer.querySelector('.buffer-body');
-    if (!gutter || !body) return;
-    const lh = parseFloat(getComputedStyle(gutter).lineHeight) || 22;
-    const count = Math.max(12, Math.ceil(body.getBoundingClientRect().height / lh));
-    gutter.textContent = Array.from({ length: count }, (_, i) => i + 1).join('\n');
-  });
 }
 
 // ─── Orchestration ────────────────────────────────────────────────────
@@ -286,14 +226,12 @@ export function renderAll(route) {
   renderStack();
   renderContact();
   renderTree(route);
-  renderTabs(route);
 }
 
-// Seules les parties dépendantes de la route (projets, arbre, onglets).
+// Seules les parties dépendantes de la route.
 export function renderRoute(route) {
   renderProjects(route);
   renderTree(route);
-  renderTabs(route);
 }
 
 // Le shell a besoin de l'arborescence dans la langue courante.

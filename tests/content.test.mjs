@@ -111,14 +111,34 @@ test('les projets sont uniques, datés et bilingues', () => {
   }
 });
 
-test('les niveaux de la stack restent dans l’échelle annoncée', () => {
+test('chaque entrée de la stack porte une phrase, pas une note chiffrée', () => {
   for (const group of stack) {
     assertBilingual(group.group, 'stack.group');
     assert.ok(group.items.length > 0, 'groupe de stack vide');
     for (const item of group.items) {
-      assert.ok(Number.isInteger(item.level) && item.level >= 1 && item.level <= 5,
-        `${item.name} : niveau hors de 1..5`);
-      assertBilingual(item.note, `${item.name}.note`);
+      const name = pick(item.name, 'fr');
+      assert.ok(name?.trim(), 'entrée de stack sans nom');
+
+      // Un nom laissé en chaîne nue s'affiche tel quel dans les deux langues.
+      // C'est voulu pour « Node » ou « PostgreSQL », mais un accent trahit du
+      // français qui se retrouverait dans la page anglaise. Le garde-fou est
+      // imparfait — il ne voit pas un mot français sans accent — mais il
+      // attrape le cas de loin le plus fréquent.
+      if (typeof item.name === 'string') {
+        assert.doesNotMatch(item.name, /[à-öø-ÿÀ-ÖØ-Þ]/,
+          `${name} : nom accentué laissé en chaîne nue, écris-le { fr, en }`);
+      } else {
+        assertBilingual(item.name, 'stack.item.name');
+      }
+      assertBilingual(item.note, `${name}.note`);
+      // La page affiche cette phrase à côté du nom : au-delà, la rangée
+      // passe sur trois lignes et la liste cesse d'être scannable.
+      for (const lang of LANGS) {
+        assert.ok(pick(item.note, lang).length <= 80, `${name} : note trop longue (${lang})`);
+      }
+      // Les jauges ont été retirées : un niveau chiffré qui traînerait dans
+      // les données ne serait plus affiché nulle part.
+      assert.equal(item.level, undefined, `${name} : « level » n’est plus utilisé, retire-le`);
     }
   }
 });

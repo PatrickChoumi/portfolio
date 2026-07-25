@@ -1,53 +1,67 @@
 # patrickchoumi/portfolio
 
-**Deux propositions, deux partis pris opposés.** Le contenu est comparable ;
-tout le reste diverge. Elles cohabitent dans ce dépôt pour être comparées
-côte à côte — l'une finira par être publiée, pas les deux.
+Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui
+en a envie.
 
-| | [**Terminal**](#un-portfolio-qui-est-aussi-un-système-de-fichiers) (ce dossier) | [**Document**](minimal/) (`minimal/`) |
-| --- | --- | --- |
-| Idée | Le portfolio est un système de fichiers explorable | Le portfolio est un document imprimé qui se trouve être à l'écran |
-| Interaction | Terminal réel, palette, routes, thème, bilingue à chaud | Dépli natif `<details>`, deux pages, un lien |
-| Typographie | JetBrains Mono + Inter, deux voix | Newsreader seul, une graisse |
-| Couleur | Un accent vert phosphore, thème clair/nuit | Aucune. Encre sur papier |
-| JavaScript | 24 Ko gzip | **0 octet** |
-| Outillage | Vite | Aucun — 100 lignes de Node |
-| Poids total | ~90 Ko gzip | 7 Ko gzip par page, 91 Ko avec les polices |
-| Tests | 46 unitaires + 18 navigateur | 21 unitaires |
-
-<table>
-<tr>
-<td width="50%"><img src="docs/captures/accueil-clair.png" alt="Variante terminal"></td>
-<td width="50%"><img src="docs/captures/minimal-haut.png" alt="Variante document"></td>
-</tr>
-<tr><td align="center"><em>Terminal</em></td><td align="center"><em>Document</em></td></tr>
-</table>
-
-Ce qui suit documente la variante **terminal**. Pour l'autre, voir
-[`minimal/README.md`](minimal/README.md).
-
----
-
-## Un portfolio qui est aussi un système de fichiers
-
-Deux vues sur exactement la même matière : une page éditoriale qui se lit
-normalement, et un terminal réel (touche <kbd>`</kbd>) où le contenu devient
-une arborescence qu'on explore à la commande. Ce n'est pas une décoration :
-`cd projects` déplace la page, cliquer sur un projet déplace le shell.
+![Accueil](docs/captures/accueil-clair.png)
 
 ---
 
 ## L'idée
+
+Le contenu du site vit dans un seul fichier de données, et se rend de deux
+façons : une page éditoriale, et un système de fichiers explorable à la
+commande. `cd projects` déplace la page ; cliquer sur un projet déplace le
+shell.
+
+**Le terminal est un bonus, jamais un péage.** Fermé, il n'existe pas :
+aucune barre permanente, aucun rappel à l'écran, aucune séquence de démarrage.
+Une phrase discrète sous l'accroche et un bouton dans le sommaire suffisent à
+le faire découvrir — et tout le contenu se lit sans jamais l'ouvrir.
 
 Un portfolio classique décrit la façon de travailler de son auteur. Celui-ci
 la met en pratique sous les yeux du visiteur :
 
 | Ce qui est affirmé | Ce qui le prouve, dans le site même |
 | --- | --- |
-| « Peu de dépendances » | zéro dépendance à l'exécution ; ~90 Ko gzip, polices comprises |
+| « Peu de dépendances » | zéro dépendance à l'exécution ; 29 Ko gzip de code (HTML + CSS + JS), plus 112 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 46 tests unitaires + 18 vérifications navigateur, en CI |
+| « Les garanties se prouvent » | 46 tests unitaires + 19 vérifications navigateur, en CI |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
+
+## Le parti pris visuel
+
+Filiation avec le système « Terminal » du projet *Theory* : monospace pour
+l'ossature, filets fins, un seul accent, palette d'éditeur claire et sombre.
+Trois règles tiennent l'ensemble, et ce sont elles qui l'empêchent de devenir
+intimidant.
+
+**1. Deux voix.** JetBrains Mono structure — titres, sommaire, chiffres,
+terminal. Newsreader se lit — prose, résumés, descriptions. La charpente
+ressemble à un éditeur de code, le texte à un livre. Un site entièrement
+monospace met son lecteur au travail.
+
+**2. Aucune boîte.** Ni carte, ni ombre, ni coin arrondi, ni badge, ni
+pastille. La seule ligne autorisée est un filet d'un pixel entre deux rangées.
+La structure vient du blanc et de l'alignement.
+
+**3. Un seul accent, rare.** Il marque la page courante, le curseur, l'invite
+du shell et le mot souligné du titre. Nulle part ailleurs.
+
+Ce qui a été retiré en cours de route, et pourquoi :
+
+| Retiré | Pourquoi |
+| --- | --- |
+| La séquence de démarrage | Un faux log de boot annonce « ce site est pour les initiés » avant même la première phrase. |
+| La gouttière de numéros de ligne | Du bruit sur chaque écran pour une métaphore que le sommaire porte déjà. |
+| Les onglets de buffer | Ils répétaient le sommaire, en travers de la lecture. |
+| La barre de statut | Un rappel permanent de raccourcis clavier sur une page qui n'en demande aucun. |
+| Les jauges de compétence | « Quatre sur cinq » ne veut rien dire pour celui qui lit, et beaucoup trop pour celui qui écrit. Une phrase honnête à la place. |
+| Les cartes, chips et pastilles | Des rangées séparées d'un filet disent la même chose sans encadrer. |
+| La grille de fond | Du bruit. |
+
+La justification est plafonnée à 34 rem, soit environ 70 caractères : au-delà,
+l'œil perd la ligne en revenant à la marge.
 
 ## Démarrer
 
@@ -77,8 +91,8 @@ Modifier ce fichier met à jour, d'un coup :
 - l'index de la palette de commandes ;
 - le CV que produit `cv`, et la version imprimée du site.
 
-Chaque champ traduisible est un objet `{ fr, en }`. Une chaîne nue est
-utilisée telle quelle dans les deux langues (pratique pour les noms propres).
+Chaque champ traduisible est un objet `{ fr, en }`. Une chaîne nue est utilisée
+telle quelle dans les deux langues — pratique pour les noms propres.
 
 ```js
 export const projects = [
@@ -87,7 +101,7 @@ export const projects = [
     name: 'Atlas',
     year: '2024',
     status: 'wip',                    // live | wip | archived
-    tagline: { fr: '…', en: '…' },
+    tagline: { fr: '…', en: '…' },    // une ligne, 90 caractères maximum
     summary: { fr: '…', en: '…' },
     highlights: { fr: ['…'], en: ['…'] },
     metrics: [{ label: { fr: 'commits/s', en: 'commits/s' }, value: '~9k' }],
@@ -99,8 +113,9 @@ export const projects = [
 
 L'audit de contenu (`npm test`) refuse les dérives courantes : slug dupliqué,
 traduction manquante, nombre de faits marquants différent entre les langues,
-parcours qui n'est plus antéchronologique, jauge de compétence hors de 1–5,
-lien relatif là où il faut une URL absolue.
+parcours qui n'est plus antéchronologique, accroche trop longue pour sa
+rangée, lien relatif là où il faut une URL absolue, ou nom de techno accentué
+laissé en français dans la version anglaise.
 
 > ⚠️ Les données livrées sont un **canevas crédible**, pas une biographie :
 > remplace-les par ton parcours réel avant de publier.
@@ -109,15 +124,15 @@ lien relatif là où il faut une URL absolue.
 
 ![Terminal](docs/captures/terminal.png)
 
-Ouvrir : <kbd>`</kbd> ou <kbd>²</kbd> (même touche physique en AZERTY), ou le
-bouton `▸ terminal` de la barre de statut.
+Ouvrir : <kbd>`</kbd> ou <kbd>²</kbd> (même touche physique en AZERTY), la
+phrase sous l'accroche, ou le bouton `>_` du sommaire.
 
 ```
 /
 ├── about.md          principles.md    resume.md    contact.md
 ├── experience/       README.md (git log) + un .md par poste
 ├── projects/         un dossier par projet : README.md, stack.txt, links.txt
-└── stack/            un .txt par groupe de compétences
+└── stack/            un .txt par groupe
 ```
 
 Vingt commandes : `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `find`,
@@ -130,9 +145,6 @@ ne sont pas dans `help`.
 - <kbd>Ctrl</kbd>+<kbd>L</kbd> efface, <kbd>Ctrl</kbd>+<kbd>C</kbd> annule, <kbd>Échap</kbd> ferme ;
 - un pipe est accepté, vers `grep` uniquement : `cat about.md | grep clarté` ;
 - une commande mal tapée propose la plus proche (distance de Levenshtein).
-
-Le terminal est un **bonus, jamais un péage** : tout le contenu est lisible
-sans jamais l'ouvrir.
 
 ## Raccourcis clavier
 
@@ -157,43 +169,29 @@ src/js/commands.js      registre des commandes (pur, testable)
 src/js/palette.js       palette Ctrl+K
 src/js/router.js        routes réelles (History API), analyse pure
 src/js/i18n.js          FR/EN, sans rechargement
-src/js/repl.js          le REPL animé de l'accueil
-src/js/boot.js          séquence de démarrage (une fois par session)
+src/js/repl.js          la question qui s'écrit, sur l'accueil
 src/js/effects.js       révélation au défilement + easter egg
-src/styles/main.css     design system « éditeur »
+src/styles/main.css     design system
 scripts/fetch-fonts.mjs auto-hébergement des polices
 tests/                  46 tests node:test — logique pure
-tests-e2e/browser.mjs   18 vérifications navigateur
+tests-e2e/browser.mjs   19 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
-dans l'explorateur, entrée de la palette, commande `cd`, bouton Précédent du
+dans le sommaire, entrée de la palette, commande `cd`, bouton Précédent du
 navigateur, lien profond — tout converge au même endroit, qui met à jour la
-section, l'URL, les onglets, l'explorateur et le répertoire courant du shell.
-
-## Design
-
-Filiation assumée avec le système « Terminal » du projet *Theory* : monospace
-pour l'ossature, sans-serif pour la prose, filets fins, un seul accent, palette
-d'éditeur claire et sombre. Ce qui change ici : l'interface n'imite pas un
-terminal, elle **est** un éditeur ouvert sur un dépôt — barre latérale =
-arborescence, section = buffer avec son onglet et sa gouttière de numéros de
-ligne, barre de statut en bas, terminal escamotable.
-
-- **Typographie** : JetBrains Mono (ossature) + Inter (prose), auto-hébergées.
-- **Couleur** : un seul accent, un vert phosphore décliné clair/sombre. Tous
-  les couples texte/fond visent au minimum le ratio AA (4,5:1).
-- **Mouvement** : `prefers-reduced-motion` coupe le REPL animé, la séquence de
-  démarrage, la révélation au défilement et l'easter egg.
-
-![Parcours](docs/captures/parcours.png)
+section, l'URL, le sommaire et le répertoire courant du shell.
 
 ## Accessibilité
 
 Lien d'évitement, navigation entièrement au clavier, `:focus-visible` visible
 partout, contrastes vérifiés dans les deux thèmes, sortie du terminal en
-`role="log"` / `aria-live="polite"`, jauges de compétence doublées d'un texte
-lisible par lecteur d'écran, animations coupées sur demande du système.
+`role="log"` / `aria-live="polite"`, boutons à glyphe étiquetés en `aria-label`
+suivant la langue, animations coupées en `prefers-reduced-motion`.
+
+Un test du harnais vérifie qu'aucun chrome retiré (barre de statut, onglets,
+gouttière, séquence de démarrage) n'est revenu, et que le terminal est bien
+fermé au chargement.
 
 ## Déploiement
 

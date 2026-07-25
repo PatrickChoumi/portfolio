@@ -48,10 +48,6 @@ function period(job, lang) {
   return `${job.start} → ${end}`;
 }
 
-function meter(level, width = 5) {
-  return '█'.repeat(level) + '░'.repeat(Math.max(0, width - level));
-}
-
 const STATUS_LABEL = {
   live: { fr: 'en ligne', en: 'live' },
   wip: { fr: 'en cours', en: 'in progress' },
@@ -157,12 +153,16 @@ function projectsReadme(lang) {
   return out.join('\n');
 }
 
+// Un glossaire, pas un palmarès : le nom, puis la phrase qui dit ce qu'on en
+// sait vraiment. Les jauges ont été retirées — « quatre sur cinq » ne veut
+// rien dire pour celui qui lit, et beaucoup trop pour celui qui écrit.
 function stackFile(group, lang) {
-  const width = Math.max(...group.items.map((i) => i.name.length));
+  const names = group.items.map((i) => pick(i.name, lang));
+  const width = Math.max(...names.map((n) => n.length));
   return [
     `# ${pick(group.group, lang)}`,
     '',
-    ...group.items.map((i) => `${i.name.padEnd(width)}  ${meter(i.level)}  ${pick(i.note, lang)}`)
+    ...group.items.map((i, k) => `${names[k].padEnd(width)}  ${pick(i.note, lang)}`)
   ].join('\n');
 }
 
@@ -184,7 +184,7 @@ function resumeFile(lang) {
   out.push(`## ${lang === 'en' ? 'Selected projects' : 'Projets choisis'}`, '');
   projects.forEach((p) => out.push(`${p.name.padEnd(12)} ${p.year}  ${pick(p.tagline, lang)}`));
   out.push('', `## Stack`, '');
-  stack.forEach((g) => out.push(`${pick(g.group, lang)} : ${g.items.map((i) => i.name).join(', ')}`));
+  stack.forEach((g) => out.push(`${pick(g.group, lang)} : ${g.items.map((i) => pick(i.name, lang)).join(', ')}`));
   out.push('', rule(), identity.links.map((l) => l.url).join('  ·  '));
   return out.join('\n');
 }

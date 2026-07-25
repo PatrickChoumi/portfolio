@@ -92,8 +92,6 @@ async function main() {
   });
 
   await page.goto(base, { waitUntil: 'networkidle' });
-  // La séquence de démarrage se coupe à la première touche.
-  await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
 
   await check('l’accueil rend le titre et l’identité', async () => {
@@ -102,9 +100,17 @@ async function main() {
     assert((await page.$$('.principle')).length === 3, 'convictions manquantes');
   });
 
-  await check('l’explorateur et les onglets sont peuplés', async () => {
-    assert((await page.$$('.tree-item')).length >= 6, 'arbre incomplet');
-    assert((await page.$$('.buffer-tab')).length === 6, 'onglets incomplets');
+  await check('le sommaire est peuplé', async () => {
+    assert((await page.$$('.tree-item')).length >= 6, 'sommaire incomplet');
+  });
+
+  // La page doit se lire seule. Ces éléments ont été retirés volontairement :
+  // s'ils réapparaissent, c'est que le chrome regagne du terrain.
+  await check('aucun chrome permanent n’est revenu', async () => {
+    for (const sel of ['.statusbar', '.buffer-tabs', '.gutter', '#boot']) {
+      assert((await page.$$(sel)).length === 0, `${sel} est de retour`);
+    }
+    assert(!(await page.isVisible('#term.is-open')), 'le terminal est ouvert au chargement');
   });
 
   await check('naviguer vers les projets change l’URL et la section', async () => {
@@ -112,15 +118,15 @@ async function main() {
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets', `URL inattendue : ${page.url()}`);
     assert(await page.isVisible('#projects.is-active'), 'section projets non affichée');
-    assert((await page.$$('.project-card')).length >= 3, 'cartes projet manquantes');
+    assert((await page.$$('.project-row')).length >= 3, 'rangées de projets manquantes');
   });
 
   await check('ouvrir une fiche projet donne une URL partageable', async () => {
-    await page.click('.project-card[data-slug="theory"]');
+    await page.click('.project-row[data-slug="theory"]');
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets/theory', 'URL de fiche incorrecte');
     assert((await page.textContent('#projects .section-title')).includes('Theory'), 'fiche non rendue');
-    assert((await page.$$('#projects .metric')).length >= 2, 'métriques absentes');
+    assert((await page.textContent('#projects .metrics')).includes('modules'), 'chiffres absents');
   });
 
   await check('un lien profond ouvre directement la fiche', async () => {
@@ -144,7 +150,6 @@ async function main() {
     await page.keyboard.press('`');
     await page.waitForTimeout(350);
     assert(await page.isVisible('#term.is-open'), 'terminal fermé');
-    assert((await page.textContent('#status-mode')).includes('SHELL'), 'mode non mis à jour');
   });
 
   await check('`ls` liste la racine du système de fichiers', async () => {
@@ -159,7 +164,7 @@ async function main() {
     await page.fill('#term-input', 'cd projects');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
-    assert((await page.textContent('#status-path')).includes('projects'), 'chemin non mis à jour');
+    assert((await page.textContent('#term-bar-path')).includes('projects'), 'chemin non mis à jour');
     assert(await page.isVisible('#projects.is-active'), 'la page n’a pas suivi le shell');
   });
 
@@ -191,7 +196,7 @@ async function main() {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
     assert(await page.isVisible('#stack.is-active'), 'open n’a pas navigué');
-    assert((await page.$$('.skill')).length >= 6, 'stack non rendue');
+    assert((await page.$$('.stack-item')).length >= 6, 'stack non rendue');
   });
 
   await check('la palette s’ouvre et navigue', async () => {
@@ -268,18 +273,25 @@ async function main() {
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(SHOT_DIR, '03-terminal.png') });
     await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     await page.click('.tree-item[data-nav="experience"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '04-parcours.png') });
     await page.click('.tree-item[data-nav="projects"]');
     await page.waitForTimeout(400);
-    await page.click('.project-card[data-slug="theory"]');
+    await page.click('.project-row[data-slug="theory"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '05-projet.png') });
+    await page.click('.tree-item[data-nav="stack"]');
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(SHOT_DIR, '06-stack.png') });
+    await page.click('.tree-item[data-nav="about"]');
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(SHOT_DIR, '07-about.png') });
     await page.setViewportSize({ width: 400, height: 780 });
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
-    await page.screenshot({ path: path.join(SHOT_DIR, '06-mobile.png') });
+    await page.screenshot({ path: path.join(SHOT_DIR, '08-mobile.png') });
   }
 
   await browser.close();

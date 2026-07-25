@@ -48,8 +48,8 @@ export const hero = {
     en: 'I build things<br />that <span class="emphasis">hold up</span>.'
   },
   lede: {
-    fr: 'Développeur. Je m’intéresse moins aux frameworks du mois qu’aux <em>fondations</em> : structures de données, accessibilité, performance réelle, code qu’on peut relire dans deux ans. Ce site en est un échantillon — il pèse quelques dizaines de kilo-octets et n’embarque aucune dépendance à l’exécution.',
-    en: 'Developer. Less interested in this month’s framework than in <em>foundations</em>: data structures, accessibility, real-world performance, code you can still read two years later. This site is a sample — a few dozen kilobytes, zero runtime dependencies.'
+    fr: 'Développeur. Je m’intéresse moins aux frameworks du mois qu’aux <em>fondations</em> : structures de données, accessibilité, performance réelle, code qu’on peut relire dans deux ans. Ce site en est un échantillon — une trentaine de kilo-octets de code, et aucune dépendance à l’exécution.',
+    en: 'Developer. Less interested in this month’s framework than in <em>foundations</em>: data structures, accessibility, real-world performance, code you can still read two years later. This site is a sample — about thirty kilobytes of code, zero runtime dependencies.'
   },
   // Le REPL de l'accueil tape ces paires. Volontairement des convictions,
   // pas des slogans : c'est le seul endroit du site qui parle à la première
@@ -319,33 +319,34 @@ export const projects = [
 ];
 
 // ─── Stack ────────────────────────────────────────────────────────────
-// `level` : 1 → 5. Honnête plutôt que flatteur — un 5 doit vouloir dire
-// « je peux déboguer ça un dimanche soir en production ».
+// Pas de niveau chiffré : « quatre sur cinq » ne veut rien dire pour celui qui
+// lit, et beaucoup trop pour celui qui écrit. Chaque entrée porte à la place
+// une phrase qui dit ce qu'on en sait vraiment — plus honnête, et plus utile.
 export const stack = [
   {
     group: { fr: 'Langages', en: 'Languages' },
     items: [
-      { name: 'JavaScript / TypeScript', level: 5, note: { fr: 'Le terrain principal, depuis ES5.', en: 'Main ground, since ES5.' } },
-      { name: 'C', level: 3, note: { fr: 'Assez pour comprendre ce qui se passe en dessous.', en: 'Enough to understand what happens underneath.' } },
-      { name: 'Python', level: 4, note: { fr: 'Outillage, scripts, prototypage.', en: 'Tooling, scripts, prototyping.' } },
-      { name: 'SQL', level: 4, note: { fr: 'Modélisation et lecture de plans d’exécution.', en: 'Modelling and reading query plans.' } }
+      { name: 'JavaScript / TypeScript', note: { fr: 'Le terrain principal, depuis ES5.', en: 'Main ground, since ES5.' } },
+      { name: 'C', note: { fr: 'Assez pour comprendre ce qui se passe en dessous.', en: 'Enough to understand what happens underneath.' } },
+      { name: 'Python', note: { fr: 'Outillage, scripts, prototypage.', en: 'Tooling, scripts, prototyping.' } },
+      { name: 'SQL', note: { fr: 'Modélisation et lecture de plans d’exécution.', en: 'Modelling and reading query plans.' } }
     ]
   },
   {
     group: { fr: 'Interface', en: 'Interface' },
     items: [
-      { name: 'CSS moderne', level: 5, note: { fr: 'Grid, cascade layers, color-mix, container queries.', en: 'Grid, cascade layers, color-mix, container queries.' } },
-      { name: 'Accessibilité (WCAG/RGAA)', level: 4, note: { fr: 'Clavier, ARIA, contraste — vérifiés, pas supposés.', en: 'Keyboard, ARIA, contrast — verified, not assumed.' } },
-      { name: 'Design system', level: 4, note: { fr: 'Tokens, composants, documentation vivante.', en: 'Tokens, components, living documentation.' } }
+      { name: { fr: 'CSS moderne', en: 'Modern CSS' }, note: { fr: 'Grid, cascade layers, color-mix, container queries.', en: 'Grid, cascade layers, color-mix, container queries.' } },
+      { name: { fr: 'Accessibilité (WCAG/RGAA)', en: 'Accessibility (WCAG)' }, note: { fr: 'Clavier, ARIA, contraste — vérifiés, pas supposés.', en: 'Keyboard, ARIA, contrast — verified, not assumed.' } },
+      { name: { fr: 'Design system', en: 'Design systems' }, note: { fr: 'Tokens, composants, documentation vivante.', en: 'Tokens, components, living documentation.' } }
     ]
   },
   {
     group: { fr: 'Plateforme', en: 'Platform' },
     items: [
-      { name: 'Node', level: 4, note: { fr: 'Services, CLI, outillage de build.', en: 'Services, CLIs, build tooling.' } },
-      { name: 'PostgreSQL', level: 4, note: { fr: 'Schémas, index, migrations sans interruption.', en: 'Schemas, indexes, zero-downtime migrations.' } },
-      { name: 'CI/CD', level: 4, note: { fr: 'Des garanties automatiques, pas des intentions.', en: 'Automatic guarantees, not intentions.' } },
-      { name: 'Tests (unit, E2E)', level: 4, note: { fr: 'Sur la logique qui casse, pas sur les getters.', en: 'On logic that breaks, not on getters.' } }
+      { name: 'Node', note: { fr: 'Services, CLI, outillage de build.', en: 'Services, CLIs, build tooling.' } },
+      { name: 'PostgreSQL', note: { fr: 'Schémas, index, migrations sans interruption.', en: 'Schemas, indexes, zero-downtime migrations.' } },
+      { name: 'CI/CD', note: { fr: 'Des garanties automatiques, pas des intentions.', en: 'Automatic guarantees, not intentions.' } },
+      { name: { fr: 'Tests (unitaires, E2E)', en: 'Tests (unit, E2E)' }, note: { fr: 'Sur la logique qui casse, pas sur les getters.', en: 'On logic that breaks, not on getters.' } }
     ]
   }
 ];

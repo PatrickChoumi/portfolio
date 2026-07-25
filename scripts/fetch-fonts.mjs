@@ -1,10 +1,24 @@
 // Récupère et auto-héberge les polices.
 //
+// Deux voix, quatre fontes, et pas une de plus :
+//
+//   JetBrains Mono 400/500  l'ossature — titres, navigation, terminal,
+//                           chiffres, tout ce qui structure ;
+//   Newsreader 400 + italique  la prose — tout ce qui se lit longuement.
+//
+// Le contraste est volontaire : la charpente ressemble à un éditeur de code,
+// le texte à un livre. C'est ce qui rend l'ensemble lisible plutôt
+// qu'intimidant — un site entièrement monospace met le lecteur au travail.
+//
+// Sous-ensemble latin uniquement, sans latin-ext : le français y est
+// entièrement couvert (accents, œ, guillemets), et cela divise le poids par
+// cinq. Aucune graisse 600, aucun faux gras : deux graisses suffisent.
+//
 // Pourquoi ne pas simplement pointer vers Google Fonts ? Parce que la page
-// contact affirme que le site n'envoie rien nulle part. Un <link> vers un
-// CDN tiers ferait mentir cette phrase : chaque visite y révélerait une IP et
-// un user-agent. Auto-héberger règle la question, supprime deux connexions
-// et deux allers-retours DNS/TLS, et rend le site utilisable hors-ligne.
+// contact affirme que le site n'envoie rien nulle part. Un <link> vers un CDN
+// ferait mentir cette phrase : chaque visite y révélerait une adresse IP et un
+// user-agent. Auto-héberger règle la question, supprime deux connexions et
+// deux allers-retours DNS/TLS, et rend le site utilisable hors-ligne.
 //
 // Les deux familles sont sous SIL Open Font License 1.1 — la redistribution
 // est explicitement permise (voir public/fonts/LICENSE.txt).
@@ -20,13 +34,9 @@ import path from 'node:path';
 const OUT_DIR = path.resolve('public/fonts');
 const CSS_OUT = path.resolve('src/styles/fonts.css');
 
-// On ne garde que le latin : le site est en français et en anglais. Charger
-// le cyrillique et le grec coûterait des kilo-octets que personne ne lit.
-const KEEP_SUBSETS = new Set(['latin', 'latin-ext']);
-
 const FAMILIES = [
-  { name: 'JetBrains Mono', query: 'JetBrains+Mono:wght@400;500;600', slug: 'jetbrains-mono' },
-  { name: 'Inter', query: 'Inter:wght@400;500;600', slug: 'inter' }
+  { name: 'JetBrains Mono', query: 'JetBrains+Mono:wght@400;500', slug: 'jetbrains-mono' },
+  { name: 'Newsreader', query: 'Newsreader:ital,wght@0,400;1,400', slug: 'newsreader' }
 ];
 
 // Sans user-agent de navigateur moderne, Google renvoie du TTF au lieu du woff2.
@@ -40,17 +50,20 @@ async function fetchCss(query) {
   return res.text();
 }
 
-// Le CSS de Google est une suite de blocs `/* subset */ @font-face {...}`.
+// Le CSS de Google est une suite de blocs `/* sous-ensemble */ @font-face {…}`.
 function parseBlocks(css) {
   const blocks = [];
   const re = /\/\*\s*([\w-]+)\s*\*\/\s*@font-face\s*\{([^}]+)\}/g;
   let m;
   while ((m = re.exec(css))) {
     const [, subset, body] = m;
-    const weight = body.match(/font-weight:\s*(\d+)/)?.[1];
-    const url = body.match(/url\((https:[^)]+\.woff2)\)/)?.[1];
-    const range = body.match(/unicode-range:\s*([^;]+);/)?.[1]?.trim();
-    if (subset && weight && url) blocks.push({ subset, weight, url, range });
+    if (subset !== 'latin') continue;
+    blocks.push({
+      style: body.match(/font-style:\s*(\w+)/)?.[1] ?? 'normal',
+      weight: body.match(/font-weight:\s*(\d+)/)?.[1],
+      url: body.match(/url\((https:[^)]+\.woff2)\)/)?.[1],
+      range: body.match(/unicode-range:\s*([^;]+);/)?.[1]?.trim()
+    });
   }
   return blocks;
 }
@@ -58,24 +71,25 @@ function parseBlocks(css) {
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const faces = [];
+  let total = 0;
 
   for (const family of FAMILIES) {
-    const css = await fetchCss(family.query);
-    const blocks = parseBlocks(css).filter((b) => KEEP_SUBSETS.has(b.subset));
-    if (!blocks.length) throw new Error(`aucun sous-ensemble latin trouvé pour ${family.name}`);
+    const blocks = parseBlocks(await fetchCss(family.query));
+    if (!blocks.length) throw new Error(`aucun sous-ensemble latin pour ${family.name}`);
 
     for (const block of blocks) {
-      const file = `${family.slug}-${block.weight}-${block.subset}.woff2`;
+      const file = `${family.slug}-${block.weight}${block.style === 'italic' ? '-italic' : ''}.woff2`;
       const res = await fetch(block.url, { headers: { 'user-agent': UA } });
       if (!res.ok) throw new Error(`${file} : HTTP ${res.status}`);
       const bytes = Buffer.from(await res.arrayBuffer());
       await writeFile(path.join(OUT_DIR, file), bytes);
-      console.log(`  ${file}  ${(bytes.length / 1024).toFixed(1)} Ko`);
+      total += bytes.length;
+      console.log(`  ${file.padEnd(32)} ${(bytes.length / 1024).toFixed(1)} Ko`);
 
       faces.push([
         '@font-face {',
         `  font-family: '${family.name}';`,
-        '  font-style: normal;',
+        `  font-style: ${block.style};`,
         `  font-weight: ${block.weight};`,
         // swap : le texte s'affiche immédiatement dans la police système et
         // bascule à l'arrivée du fichier. Jamais de page blanche.
@@ -90,11 +104,11 @@ async function main() {
   const header = [
     '/* Généré par scripts/fetch-fonts.mjs — ne pas éditer à la main.',
     '   Polices auto-hébergées : aucune requête vers un tiers au chargement.',
-    '   JetBrains Mono et Inter — SIL Open Font License 1.1. */',
+    '   JetBrains Mono et Newsreader — SIL Open Font License 1.1. */',
     ''
   ].join('\n');
   await writeFile(CSS_OUT, `${header}${faces.join('\n\n')}\n`);
-  console.log(`\n${faces.length} @font-face écrits dans ${path.relative(process.cwd(), CSS_OUT)}`);
+  console.log(`\n  ${faces.length} fontes, ${(total / 1024).toFixed(0)} Ko au total.`);
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });
