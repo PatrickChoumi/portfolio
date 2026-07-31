@@ -4,8 +4,8 @@
   "description": "Portfolio d'un élève ingénieur en génie informatique. Un portfolio qui est aussi un système de fichiers.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#101215",
-  "theme_color": "#101215",
+  "background_color": "#0d1013",
+  "theme_color": "#0d1013",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

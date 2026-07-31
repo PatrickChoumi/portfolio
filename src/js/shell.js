@@ -20,7 +20,6 @@
 import { COMMANDS, parseLine, nearestCommand, escapeHtml } from './commands.js';
 import { resolvePath, lookup, formatPath } from '../data/fs.js';
 import { identity, host } from '../data/profile.js';
-import { imageToAscii, asciiToPng } from './ascii.js';
 import { t, tx, getLang } from './i18n.js';
 
 const HISTORY_KEY = 'portfolio_history';
@@ -35,7 +34,6 @@ export function initShell(hooks) {
     prompt: document.getElementById('term-prompt'),
     close: document.getElementById('term-close'),
     hint: document.getElementById('term-hint'),
-    barPath: document.getElementById('term-bar-path'),
     statusPath: document.getElementById('status-path'),
     statusMode: document.getElementById('status-mode')
   };
@@ -65,75 +63,11 @@ export function initShell(hooks) {
     clear: () => { el.screen.innerHTML = ''; },
     history: () => history.slice(),
     theme: () => document.documentElement.getAttribute('data-theme') || 'light',
-
-    // Largeur utile de l'écran, en caractères.
-    columns: () => {
-      const { charWidth } = metrics();
-      return Math.max(20, Math.floor((el.screen.clientWidth - 40) / charWidth));
-    },
-
-    // Le portrait en caractères. Renvoie null si aucune image n'est déposée :
-    // l'appelant retombe alors sur son rendu de secours.
-    ascii: async (cols, opts = {}) => {
-      if (!identity.avatar) return null;
-      try {
-        return await imageToAscii(identity.avatar, cols, { charRatio: metrics().charRatio, ...opts });
-      } catch {
-        return null;
-      }
-    },
-
-    // Dimensions de l'écran, pour un fond d'écran à la bonne taille.
-    screen: () => ({
-      width: Math.round(window.screen?.width * (window.devicePixelRatio || 1)) || 2560,
-      height: Math.round(window.screen?.height * (window.devicePixelRatio || 1)) || 1440
-    }),
-
-    // Composition du dessin en image, aux couleurs du thème courant.
-    png: (lines, opts) => {
-      const css = getComputedStyle(document.documentElement);
-      return asciiToPng(lines, {
-        bg: css.getPropertyValue('--bg').trim() || '#101215',
-        fg: css.getPropertyValue('--accent').trim() || '#7aa2f7',
-        ...opts
-      });
-    },
-
-    download: (dataUrl, filename) => {
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    },
-
     uptime: () => {
       const s = Math.floor((Date.now() - started) / 1000);
       return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
     }
   };
-
-  // Mesure d'une vraie ligne de dessin : largeur d'un caractère et hauteur de
-  // ligne. Deviner ces valeurs déforme le portrait — un caractère n'est pas
-  // exactement deux fois plus haut que large, et l'interligne serré des lignes
-  // de dessin change encore le rapport. On mesure donc dans les conditions
-  // exactes du rendu, avec la même classe CSS.
-  function metrics() {
-    const probe = document.createElement('div');
-    probe.className = 'term-line';
-    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
-    probe.innerHTML = `<span class="art">${'0'.repeat(50)}</span>`;
-    el.screen.appendChild(probe);
-    const charWidth = probe.querySelector('.art').getBoundingClientRect().width / 50;
-    const lineHeight = probe.getBoundingClientRect().height;
-    probe.remove();
-    return {
-      charWidth: charWidth || 8.4,
-      lineHeight: lineHeight || 15,
-      charRatio: charWidth ? lineHeight / charWidth : 2
-    };
-  }
 
   // ─── Sortie ─────────────────────────────────────────────────────────
   function push(lineObj) {
@@ -147,20 +81,7 @@ export function initShell(hooks) {
     while (el.screen.childElementCount > MAX_LINES) el.screen.firstElementChild.remove();
   }
 
-  // Une sortie plus haute que l'écran est cadrée sur son DÉBUT, pas sur sa
-  // fin : un portrait de cinquante lignes dont on ne verrait que le menton
-  // n'apprend rien. Les sorties courtes gardent le comportement d'un shell —
-  // on suit le bas.
-  function write(lines) {
-    const first = el.screen.lastElementChild;
-    lines.forEach(push);
-    const added = first ? first.nextElementSibling : el.screen.firstElementChild;
-    if (added && el.screen.scrollHeight - added.offsetTop > el.screen.clientHeight) {
-      el.screen.scrollTop = added.offsetTop - el.screen.offsetTop;
-    } else {
-      scrollDown();
-    }
-  }
+  const write = (lines) => { lines.forEach(push); scrollDown(); };
   const scrollDown = () => { el.screen.scrollTop = el.screen.scrollHeight; };
 
   function promptHtml() {
@@ -170,10 +91,6 @@ export function initShell(hooks) {
 
   function refreshPrompt() {
     el.prompt.innerHTML = promptHtml();
-    // Le chemin s'affiche à deux endroits : dans la barre du tiroir, et dans
-    // la barre de statut — qui reste visible même terminal fermé, et rappelle
-    // que la page et le shell regardent le même dossier.
-    if (el.barPath) el.barPath.textContent = pathLabel();
     if (el.statusPath) el.statusPath.textContent = pathLabel();
   }
 
@@ -203,22 +120,7 @@ export function initShell(hooks) {
       out = [{ text: `${name}: ${e.message}`, cls: 'is-err' }];
     }
 
-    // Une commande peut renvoyer une promesse — `portrait` et `neofetch`
-    // attendent le décodage d'une image. On finit le rendu quand elle résout,
-    // sans bloquer la saisie entre-temps.
-    if (out && typeof out.then === 'function') {
-      out.then(finish).catch((e) => finish([{ text: `${name}: ${e.message}`, cls: 'is-err' }]));
-      return;
-    }
-    finish(out);
-
-    function finish(lines) {
-      write(applyPipe(lines || [], pipe));
-    }
-  }
-
-  // Pipe : seul `grep` est accepté à droite. Le reste serait du décor.
-  function applyPipe(out, pipe) {
+    // Pipe : seul `grep` est accepté à droite. Le reste serait du décor.
     if (pipe && pipe[0]) {
       if (pipe[0] !== 'grep') {
         out = [{ text: `${pipe[0]}: ${t('shell.notfound')} (| grep)`, cls: 'is-err' }];
@@ -228,7 +130,7 @@ export function initShell(hooks) {
         if (!out.length) out = [{ text: t('shell.matchesNone'), cls: 'is-dim' }];
       }
     }
-    return out;
+    write(out);
   }
 
   const plainOf = (l) => (l.html != null ? l.html.replace(/<[^>]*>/g, '') : (l.text || ''));
@@ -364,13 +266,13 @@ export function initShell(hooks) {
     if (open) setTimeout(() => el.input.focus(), 0);
   });
 
-  // L'invite et l'indice sont rendus ici, pas dans le HTML : sinon ils
-  // resteraient en français sur une page basculée en anglais avant la
-  // première ouverture du terminal.
+  // Le libellé du mode est rendu ici, pas dans le HTML : sinon il resterait
+  // en français sur une page basculée en anglais avant la première ouverture
+  // du terminal.
   function refreshChrome() {
     refreshPrompt();
     if (el.hint) el.hint.textContent = t('term.hint');
-    if (el.statusMode) el.statusMode.textContent = open ? 'SHELL' : t('status.read');
+    el.statusMode.textContent = open ? 'SHELL' : (getLang() === 'en' ? 'READ' : 'LIRE');
   }
   refreshChrome();
 

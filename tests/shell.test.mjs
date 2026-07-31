@@ -8,7 +8,6 @@ import assert from 'node:assert/strict';
 
 import { tokenize, parseLine, COMMANDS, nearestCommand, colorize } from '../src/js/commands.js';
 import { buildFs } from '../src/data/fs.js';
-import { identity } from '../src/data/profile.js';
 import { pick } from '../src/data/lang.js';
 
 // Contexte minimal — enregistre les effets au lieu de les produire.
@@ -32,15 +31,7 @@ function makeCtx(cwd = []) {
     clear() { effects.cleared = true; },
     history: () => ['ls', 'cat about.md'],
     theme: () => effects.theme,
-    uptime: () => '3s',
-    columns: () => 60,
-    screen: () => ({ width: 2560, height: 1440 }),
-    png: () => 'data:image/png;base64,stub',
-    download(url, name) { effects.downloaded = name; },
-    // Aucune photo dans un contexte de test : les commandes qui en dépendent
-    // doivent se rabattre proprement. Le rendu réel d'une image se vérifie
-    // dans le navigateur (tests-e2e/browser.mjs).
-    ascii: async () => null
+    uptime: () => '3s'
   };
 }
 
@@ -176,20 +167,6 @@ test('colorize n’émet jamais de HTML non échappé', () => {
       assert.match(l.html, /&lt;script/i, `contenu non échappé pour : ${sample}`);
     }
   }
-});
-
-test('neofetch se rabat sur sa vignette quand aucune photo n’est déposée', async () => {
-  const out = text(await COMMANDS.neofetch.run([], makeCtx()));
-  assert.match(out, /patrickchoumi@portfolio/);
-  assert.match(out, /▄▄▄/, 'vignette de secours absente');
-});
-
-test('portrait indique le chemin réel quand il n’y a pas d’image', async () => {
-  const out = await COMMANDS.portrait.run([], makeCtx());
-  assert.equal(out[0].cls, 'is-dim');
-  // Le message doit pointer le chemin configuré, pas un chemin écrit en dur :
-  // renommer le fichier sans mettre le message à jour serait un piège.
-  assert.match(text(out), new RegExp(`public${identity.avatar.replace('.', '\\.')}`));
 });
 
 test('les easter eggs répondent sans casser', () => {

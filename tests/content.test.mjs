@@ -1,7 +1,7 @@
 // Audit du contenu. Un portfolio se dégrade par petites négligences : une
-// traduction oubliée, un slug dupliqué, un lien mort de syntaxe, une jauge
-// à 7/5. La CI refuse ces dérives — c'est ce qui distingue une garantie
-// d'une bonne intention.
+// traduction oubliée, un slug dupliqué, un lien mort de syntaxe, une accroche
+// qui déborde de sa rangée. La CI refuse ces dérives — c'est ce qui distingue
+// une garantie d'une bonne intention.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,11 +24,10 @@ function assertBilingual(value, label) {
 
 test('l’identité est complète et l’email est plausible', () => {
   assert.ok(identity.name.trim().length > 0);
+  // Le nom complet ne sert que sur le CV. S'il divergeait du nom affiché,
+  // deux personnes différentes signeraient la même page.
   assert.ok(identity.fullName.includes(identity.name.split(' ').pop()),
     'le nom complet doit contenir le nom affiché');
-  assert.match(identity.avatar, /^\/[\w.-]+\.(png|jpg|jpeg|webp|avif)$/i,
-    'le chemin de l’avatar doit porter une extension explicite');
-  assertBilingual(identity.avatarNote, 'identity.avatarNote');
   assert.match(identity.email, /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i);
   assertBilingual(identity.role, 'identity.role');
   assertBilingual(identity.location, 'identity.location');
@@ -136,8 +135,8 @@ test('chaque entrée de la stack porte une phrase, pas une note chiffrée', () =
         assertBilingual(item.name, 'stack.item.name');
       }
       assertBilingual(item.note, `${name}.note`);
-      // La page affiche cette phrase à côté du nom : au-delà, la rangée
-      // passe sur trois lignes et la liste cesse d'être scannable.
+      // La page affiche cette phrase sous le nom : au-delà, la rangée passe
+      // sur trois lignes et la liste cesse d'être scannable.
       for (const lang of LANGS) {
         assert.ok(pick(item.note, lang).length <= 80, `${name} : note trop longue (${lang})`);
       }

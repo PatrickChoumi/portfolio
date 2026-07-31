@@ -14,8 +14,6 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { testAvatar } from './make-png.mjs';
-
 const DIST = path.resolve('dist');
 const SHOTS = process.argv.includes('--shots');
 const SHOT_DIR = process.env.SHOT_DIR || path.resolve('.shots');
@@ -27,17 +25,9 @@ const MIME = {
 
 // Serveur statique minimal avec repli SPA — l'équivalent de ce que fait
 // n'importe quel hébergeur, sans dépendance supplémentaire.
-const TEST_AVATAR = testAvatar(128);
-
 function serve() {
   const server = createServer(async (req, res) => {
     const url = req.url.split('?')[0];
-    // Si aucune photo n'est déposée dans public/, on en sert une de synthèse :
-    // la conversion en caractères doit être vérifiée dans les deux cas.
-    if (url === '/avatar.png' && !existsSync(path.join(DIST, 'avatar.png'))) {
-      res.writeHead(200, { 'content-type': 'image/png' });
-      return res.end(TEST_AVATAR);
-    }
     let file = path.join(DIST, url === '/' ? 'index.html' : url);
     if (!path.extname(file) || !existsSync(file)) file = path.join(DIST, 'index.html');
     try {
@@ -80,7 +70,7 @@ async function main() {
     executablePath: process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined),
     args: ['--no-sandbox']
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, acceptDownloads: true });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
 
   // On distingue les vraies erreurs de script du bruit réseau : une machine
   // de CI hors ligne peut échouer à charger une ressource externe sans que
@@ -102,6 +92,8 @@ async function main() {
   });
 
   await page.goto(base, { waitUntil: 'networkidle' });
+  // La séquence de démarrage se coupe à la première touche.
+  await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
 
   await check('l’accueil rend le titre et l’identité', async () => {
@@ -110,42 +102,9 @@ async function main() {
     assert((await page.$$('.principle')).length === 3, 'convictions manquantes');
   });
 
-  await check('le sommaire est peuplé', async () => {
-    assert((await page.$$('.tree-item')).length >= 6, 'sommaire incomplet');
-  });
-
-  await check('le sommaire déplie le dossier courant', async () => {
-    const before = (await page.$$('.tree-item')).length;
-    await page.click('.tree-item[data-nav="experience"]');
-    await page.waitForTimeout(250);
-    const after = (await page.$$('.tree-item[data-depth="1"]')).length;
-    assert(after >= 2, `dossier non déplié : ${after} enfant(s)`);
-    assert((await page.$$('.tree-item')).length > before, 'le nombre d’entrées n’a pas augmenté');
-    // Les enfants viennent du système de fichiers virtuel, pas d'une liste
-    // écrite à côté : leurs noms doivent être ceux des fichiers.
-    const names = await page.$$eval('.tree-item[data-depth="1"]', (els) => els.map((e) => e.textContent.trim()));
-    assert(names.every((n) => n.endsWith('.md')), `noms inattendus : ${names.join(', ')}`);
-  });
-
-  // Ces éléments-là ont été retirés pour de bon : s'ils réapparaissent, c'est
-  // que le chrome regagne du terrain sur la lecture.
-  await check('le chrome retiré n’est pas revenu', async () => {
-    for (const sel of ['.buffer-tabs', '.gutter', '#boot']) {
-      assert((await page.$$(sel)).length === 0, `${sel} est de retour`);
-    }
-    assert(!(await page.isVisible('#term.is-open')), 'le terminal est ouvert au chargement');
-  });
-
-  await check('la barre de statut affiche le mode et le chemin', async () => {
-    assert(await page.isVisible('.statusbar'), 'barre de statut absente');
-    assert((await page.textContent('#status-mode')).trim().length > 0, 'mode vide');
-    assert((await page.textContent('#status-path')).includes('~'), 'chemin absent');
-  });
-
-  await check('le portrait apparaît dans le sommaire quand l’image existe', async () => {
-    assert(await page.isVisible('#avatar'), 'portrait masqué alors que l’image est servie');
-    const src = await page.getAttribute('#avatar-img', 'src');
-    assert(src && src.includes('avatar'), `source inattendue : ${src}`);
+  await check('l’explorateur et les onglets sont peuplés', async () => {
+    assert((await page.$$('.tree-item')).length >= 6, 'arbre incomplet');
+    assert((await page.$$('.buffer-tab')).length === 6, 'onglets incomplets');
   });
 
   await check('naviguer vers les projets change l’URL et la section', async () => {
@@ -153,15 +112,15 @@ async function main() {
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets', `URL inattendue : ${page.url()}`);
     assert(await page.isVisible('#projects.is-active'), 'section projets non affichée');
-    assert((await page.$$('.project-row')).length >= 3, 'rangées de projets manquantes');
+    assert((await page.$$('.project-card')).length >= 3, 'cartes projet manquantes');
   });
 
   await check('ouvrir une fiche projet donne une URL partageable', async () => {
-    await page.click('.project-row[data-slug="theory"]');
+    await page.click('.project-card[data-slug="theory"]');
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets/theory', 'URL de fiche incorrecte');
     assert((await page.textContent('#projects .section-title')).includes('Theory'), 'fiche non rendue');
-    assert((await page.textContent('#projects .metrics')).includes('modules'), 'chiffres absents');
+    assert((await page.$$('#projects .metric')).length >= 2, 'métriques absentes');
   });
 
   await check('un lien profond ouvre directement la fiche', async () => {
@@ -185,6 +144,7 @@ async function main() {
     await page.keyboard.press('`');
     await page.waitForTimeout(350);
     assert(await page.isVisible('#term.is-open'), 'terminal fermé');
+    assert((await page.textContent('#status-mode')).includes('SHELL'), 'mode non mis à jour');
   });
 
   await check('`ls` liste la racine du système de fichiers', async () => {
@@ -199,7 +159,7 @@ async function main() {
     await page.fill('#term-input', 'cd projects');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
-    assert((await page.textContent('#term-bar-path')).includes('projects'), 'chemin non mis à jour');
+    assert((await page.textContent('#status-path')).includes('projects'), 'chemin non mis à jour');
     assert(await page.isVisible('#projects.is-active'), 'la page n’a pas suivi le shell');
   });
 
@@ -231,65 +191,12 @@ async function main() {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
     assert(await page.isVisible('#stack.is-active'), 'open n’a pas navigué');
-    assert((await page.$$('.stack-item')).length >= 6, 'stack non rendue');
-  });
-
-  await check('le portrait de la page bascule en caractères', async () => {
-    await page.click('.tree-item[data-nav="about"]');
-    await page.waitForTimeout(250);
-    assert(await page.isVisible('#portrait'), 'portrait absent de la page « à propos »');
-    await page.click('#portrait-flip');
-    await page.waitForTimeout(700);
-    assert(await page.getAttribute('#portrait-flip', 'aria-pressed') === 'true', 'état non annoncé');
-    const art = await page.textContent('#portrait-ascii');
-    assert(art.split('\n').length > 20, 'dessin trop court');
-  });
-
-  await check('`portrait` convertit l’image en caractères', async () => {
-    await page.fill('#term-input', 'portrait 30');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
-    const lines = await page.$$eval('#term-screen .art', (els) => els.map((e) => e.textContent));
-    assert(lines.length >= 8, `trop peu de lignes : ${lines.length}`);
-    assert(lines.every((l) => l.length === 30), 'largeur demandée non respectée');
-    // Une mire produit forcément plusieurs niveaux : un dessin uniforme
-    // signifierait que l'échantillonnage ne lit rien.
-    const distinct = new Set(lines.join('').split(''));
-    assert(distinct.size >= 4, `dessin trop uniforme : ${[...distinct].join('')}`);
-  });
-
-  await check('`neofetch` place le portrait à côté de la fiche', async () => {
-    await page.fill('#term-input', 'neofetch');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(500);
-    const screen = await page.textContent('#term-screen');
-    assert(screen.includes('patrickchoumi@portfolio'), 'fiche absente');
-    assert((await page.$$('#term-screen .art')).length > 0, 'portrait absent du neofetch');
-  });
-
-  await check('cliquer le portrait ouvre le terminal dessus', async () => {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
-    await page.click('#avatar');
-    await page.waitForTimeout(500);
-    assert(await page.isVisible('#term.is-open'), 'terminal fermé');
-    assert((await page.textContent('#term-screen')).includes('portrait'), 'commande non jouée');
-  });
-
-  await check('`wallpaper` produit un PNG téléchargeable', async () => {
-    const download = page.waitForEvent('download', { timeout: 8000 }).catch(() => null);
-    await page.fill('#term-input', 'wallpaper 1280x720');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(900);
-    assert((await page.textContent('#term-screen')).includes('portrait-1280x720.png'), 'nom de fichier absent');
-    const file = await download;
-    assert(file, 'aucun téléchargement déclenché');
-    assert(file.suggestedFilename() === 'portrait-1280x720.png', `nom inattendu : ${file.suggestedFilename()}`);
+    assert((await page.$$('.skill')).length >= 6, 'stack non rendue');
   });
 
   await check('la palette s’ouvre et navigue', async () => {
     await page.keyboard.press('Escape'); // ferme le terminal
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(200);
     await page.keyboard.press('Control+k');
     await page.waitForTimeout(200);
     assert(await page.isVisible('.palette-overlay.is-open'), 'palette fermée');
@@ -328,6 +235,48 @@ async function main() {
     assert(summary.trim().length > 20, 'parcours vide après changement de langue');
   });
 
+  // ─── La séquence de démarrage ───────────────────────────────────────
+  // Elle a trois garde-fous, et chacun peut se casser sans rien casser
+  // d'autre — donc chacun se vérifie ici. Un contexte neuf par cas : le
+  // sessionStorage est ce qui décide si elle joue.
+  await check('le démarrage joue son log, puis s’efface à la première touche', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const p = await ctx.newPage();
+    await p.goto(base);
+    await p.waitForSelector('.boot-log div', { timeout: 3000 });
+    assert((await p.textContent('.boot-log')).trim().length > 0, 'log de démarrage vide');
+    await p.keyboard.press('Escape');
+    await p.waitForSelector('#boot', { state: 'detached', timeout: 3000 });
+    assert(await p.isVisible('#home.is-active'), 'la page n’est pas rendue derrière');
+    await ctx.close();
+  });
+
+  await check('le démarrage ne joue qu’une fois par session', async () => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const p = await ctx.newPage();
+    await p.goto(base);
+    await p.waitForSelector('.boot-log div', { timeout: 3000 });
+    await p.keyboard.press('Escape');
+    await p.waitForSelector('#boot', { state: 'detached', timeout: 3000 });
+    // Rechargement dans le même onglet : plus de log, on va droit au contenu.
+    await p.reload({ waitUntil: 'networkidle' });
+    await p.waitForTimeout(400);
+    assert((await p.$('#boot')) === null, 'le log rejoue à chaque rechargement');
+    await ctx.close();
+  });
+
+  await check('un lien profond n’ouvre jamais sur un écran de chargement', async () => {
+    // Arriver sur /projets/theory depuis un lien partagé doit montrer la
+    // fiche, pas une animation qu'on n'a pas demandée.
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+    const p = await ctx.newPage();
+    await p.goto(`${base}/projets/theory`, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(400);
+    assert((await p.$('#boot')) === null, 'le log de démarrage s’affiche sur un deep-link');
+    assert((await p.textContent('#projects .section-title')).includes('Theory'), 'fiche non rendue');
+    await ctx.close();
+  });
+
   await check('aucune requête ne sort vers un hôte tiers', () => {
     assert(external.size === 0, `hôtes contactés : ${[...external].join(', ')}`);
   });
@@ -353,33 +302,26 @@ async function main() {
     await page.screenshot({ path: path.join(SHOT_DIR, '02-accueil-sombre.png') });
     await page.keyboard.press('`');
     await page.waitForTimeout(400);
-    await page.fill('#term-input', 'portrait 26');
+    await page.fill('#term-input', 'neofetch');
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(300);
     await page.fill('#term-input', 'tree projects');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(SHOT_DIR, '03-terminal.png') });
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
     await page.click('.tree-item[data-nav="experience"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '04-parcours.png') });
     await page.click('.tree-item[data-nav="projects"]');
     await page.waitForTimeout(400);
-    await page.click('.project-row[data-slug="theory"]');
+    await page.click('.project-card[data-slug="theory"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '05-projet.png') });
-    await page.click('.tree-item[data-nav="stack"]');
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: path.join(SHOT_DIR, '06-stack.png') });
-    await page.click('.tree-item[data-nav="about"]');
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: path.join(SHOT_DIR, '07-about.png') });
     await page.setViewportSize({ width: 400, height: 780 });
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
-    await page.screenshot({ path: path.join(SHOT_DIR, '08-mobile.png') });
+    await page.screenshot({ path: path.join(SHOT_DIR, '06-mobile.png') });
   }
 
   await browser.close();

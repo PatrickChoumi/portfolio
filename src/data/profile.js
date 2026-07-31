@@ -31,21 +31,9 @@ export const identity = {
   },
   email: 'patrickchoumi@gmail.com',
 
-  // L'avatar. Le MÊME fichier sert deux fois : affiché dans le sommaire et
-  // sur la page « à propos », et converti en caractères par les commandes
-  // `portrait` et `wallpaper` du terminal (src/js/ascii.js).
-  //
-  // L'extension doit correspondre au contenu réel du fichier : un JPEG nommé
-  // .png fonctionne dans la plupart des navigateurs (ils reniflent le type),
-  // mais pas partout, et jamais chez un hébergeur qui renvoie
-  // `X-Content-Type-Options: nosniff`. Ici c'est un JPEG, donc `.jpg`.
-  //
-  // Absent → le sommaire garde le monogramme « ~/ » et `neofetch` sa vignette.
-  avatar: '/avatar.jpg',
-  avatarNote: {
-    fr: 'Personnage de Blue Lock — ce n’est pas une photo de moi.',
-    en: 'A Blue Lock character — not a photo of me.'
-  },
+  // Pas de photo de profil : le site s'identifie par son invite `~/` et par la
+  // vignette en caractères de `neofetch`. Un portrait avait été essayé et
+  // retiré — l'identité d'un poste de travail, c'est son prompt.
 
   links: [
     { label: 'GitHub', url: 'https://github.com/PatrickChoumi', handle: '@PatrickChoumi' },

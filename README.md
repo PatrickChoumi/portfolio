@@ -1,7 +1,11 @@
 # patrickchoumi/portfolio
 
-Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui
-en a envie.
+Un portfolio qui est aussi un système de fichiers.
+
+Deux vues sur exactement la même matière : une page éditoriale qui se lit
+normalement, et un terminal réel (touche <kbd>`</kbd>) où le contenu devient
+une arborescence qu'on explore à la commande. Ce n'est pas une décoration :
+`cd projects` déplace la page, cliquer sur un projet déplace le shell.
 
 ![Accueil](docs/captures/accueil-clair.png)
 
@@ -9,146 +13,15 @@ en a envie.
 
 ## L'idée
 
-Le contenu du site vit dans un seul fichier de données, et se rend de deux
-façons : une page éditoriale, et un système de fichiers explorable à la
-commande. `cd projects` déplace la page ; cliquer sur un projet déplace le
-shell.
-
-**Le terminal est un bonus, jamais un péage.** Tout le contenu se lit sans
-jamais l'ouvrir : pas de séquence de démarrage, pas de modale, pas d'étape
-obligée. Il s'annonce en une ligne sous l'accroche, un bouton dans le
-sommaire, et le rappel discret de la barre de statut.
-
 Un portfolio classique décrit la façon de travailler de son auteur. Celui-ci
 la met en pratique sous les yeux du visiteur :
 
 | Ce qui est affirmé | Ce qui le prouve, dans le site même |
 | --- | --- |
-| « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
+| « Peu de dépendances » | zéro dépendance à l'exécution ; 32 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 48 tests unitaires + 27 vérifications navigateur, en CI |
+| « Les garanties se prouvent » | 46 tests unitaires + 21 vérifications navigateur, en CI |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
-
-## Le portrait, quatre fois
-
-C'est le principe du site appliqué au visage : **une seule image, plusieurs
-rendus** — le médaillon du sommaire, le portrait retournable de la page « à
-propos », le dessin du terminal, et le fond d'écran que `wallpaper` exporte.
-
-Dans le sommaire, la photo de profil est affichée telle qu'elle est, dans un
-médaillon rond légèrement recentré sur le visage — à cinquante pixels, cadrer
-la planche entière ne montre rien. Une version « duotone » a été tentée —
-teintée à l'accent et inversée en thème sombre pour que le fond blanc ne troue
-pas la colonne : le portrait sortait en négatif, méconnaissable. Sur un avatar,
-l'identité prime sur la palette.
-
-Sur la page « à propos », le portrait est affiché en grand — et **il se
-retourne d'un clic** sur sa version en caractères. C'est la thèse du site
-rendue visible sans avoir à ouvrir le terminal.
-
-Dans le terminal, `portrait` convertit **le même fichier** en tableau de
-caractères, à la volée :
-
-![Le portrait dans neofetch](docs/captures/portrait-neofetch.png)
-
-`neofetch` s'en sert comme un vrai neofetch se sert du logo de sa
-distribution — le dessin à gauche, la fiche à droite. Et cliquer sur la photo
-dans le sommaire ouvre le terminal dessus.
-
-La conversion (`src/js/ascii.js`) se fait dans le navigateur, au moment où on
-la demande : aucune étape de build, aucun décodeur d'image à écrire, aucune
-dépendance. N'importe quel format que le navigateur sait lire fonctionne
-(png, jpg, webp, avif), et le résultat est mis en cache.
-
-**Le critère est la ressemblance**, pas la lisibilité du visage. Ce sont deux
-choses différentes, et il faut choisir : un rendu clair et aéré montre mieux
-les traits, mais évoque un croquis léger là où la planche source est une masse
-dense de hachures. C'est ce critère qui a tranché chacun des points suivants,
-et il n'a pas toujours donné la réponse attendue.
-
-**Les caractères jouent l'encre, pas la lumière.** Inverser la rampe selon le
-thème paraissait logique — sur fond sombre, les pixels clairs denses. Sur un
-dessin au trait, dont le fond est blanc, cela remplit tout le cadre de `@` et
-le visage disparaît. Un trait reste un trait, quel que soit le fond.
-
-**Une moyenne efface les traits.** Réduire directement une image à une grille
-de caractères moyenne chaque cellule : un trait noir d'un pixel au milieu de
-blanc devient un gris presque invisible. On dessine donc à quatre fois la
-résolution cible, puis chaque cellule mélange sa moyenne et son pixel le plus
-sombre. Les niveaux sont ensuite recalés sur la plage réellement présente, et
-une courbe en puissance dose la quantité d'encre finale — c'est le réglage le
-plus sensible, celui qui fait qu'on reconnaît la photo ou non.
-
-**JetBrains Mono ligature `==`, `--`, `=+`.** Dans un terminal c'est déjà
-discutable sur des chemins ; sur un dessin en caractères c'est fatal — les
-fusions disloquent la grille et le portrait devient une bouillie de traits.
-Le terminal coupe donc les ligatures (`font-variant-ligatures: none`).
-
-**La taille fait partie du réglage.** Le rendu a été jugé à une largeur
-précise — 52 colonnes (`PORTRAIT_COLS`). `portrait`, `neofetch` et le portrait
-retournable de la page s'y tiennent tous les trois, pour que le dessin soit le
-même partout ; changer l'un des réglages sans l'autre casse l'équilibre.
-`portrait 90` reste possible pour une version plus grande, et la largeur du
-terminal reste la limite : sur un téléphone, le dessin s'adapte plutôt que de
-déborder.
-
-**Et en fond d'écran.** `wallpaper` compose le même dessin sur un canvas aux
-dimensions d'un écran et le télécharge en PNG : `wallpaper`, `wallpaper
-3840x2160`, ou `wallpaper 1920x1080 90` pour forcer la largeur en colonnes. Les
-couleurs sont celles du thème courant, lues sur la page — le fond d'écran
-change donc selon qu'on le demande en clair ou en sombre.
-
-### Mettre ta photo
-
-Dépose ton image dans **`public/`** et donne son chemin à `identity.avatar`
-(`src/data/profile.js`). C'est tout — rien à compiler, rien à configurer.
-
-L'extension doit correspondre au contenu réel du fichier. Un JPEG nommé `.png`
-s'affiche dans la plupart des navigateurs, qui reniflent le type — mais pas
-partout, et jamais chez un hébergeur qui renvoie `X-Content-Type-Options:
-nosniff`.
-
-Sans fichier, tout se dégrade proprement : le sommaire garde le monogramme
-`~/`, `neofetch` sa vignette, et `portrait` indique le chemin attendu.
-
-## Le parti pris visuel
-
-Filiation avec le système « Terminal » du projet *Theory* : monospace pour
-l'ossature, filets fins, un seul accent, palette d'éditeur claire et sombre.
-Trois règles tiennent l'ensemble.
-
-**1. Deux voix, toutes deux techniques.** JetBrains Mono porte l'ossature —
-titres, sommaire, chiffres, terminal, barre de statut. Inter porte la prose.
-Un serif éditorial a été essayé ici et retiré : il donnait au site l'air d'une
-revue, alors que le sujet est un poste de travail.
-
-**2. Aucune boîte.** Ni carte, ni ombre, ni coin arrondi, ni badge, ni
-pastille. La seule ligne autorisée est un filet d'un pixel entre deux rangées.
-La structure vient du blanc et de l'alignement. Deux exceptions, toutes deux
-rondes et toutes deux porteuses de sens : la pastille de disponibilité, et le
-médaillon de la photo de profil — un avatar rond est une convention qui
-distingue immédiatement une personne d'un élément d'interface.
-
-**3. Un seul accent, rare.** Un bleu — celui des dossiers dans un `ls`. Il
-marque la page courante, le curseur, l'invite du shell et le mot souligné du
-titre. Nulle part ailleurs.
-
-L'interface, elle, assume d'être un outil : barre de statut en bas (mode,
-chemin courant, raccourcis), noms de fichiers dans le sommaire, et un sommaire
-qui se déplie — le dossier de la section courante ouvre ses vrais enfants, ceux
-que le terminal explore. La justification est plafonnée à 34 rem, soit environ
-70 caractères : au-delà, l'œil perd la ligne en revenant à la marge.
-
-Ce qui a été retiré en cours de route, et pourquoi :
-
-| Retiré | Pourquoi |
-| --- | --- |
-| La séquence de démarrage | Un faux log de boot annonce « ce site est pour les initiés » avant même la première phrase. |
-| La gouttière de numéros de ligne | Du bruit sur chaque écran pour une métaphore que le sommaire porte déjà. |
-| Les onglets de buffer | Ils répétaient le sommaire, en travers de la lecture. |
-| Les jauges de compétence | « Quatre sur cinq » ne veut rien dire pour celui qui lit, et beaucoup trop pour celui qui écrit. Une phrase honnête à la place. |
-| Les cartes, chips et pastilles | Des rangées séparées d'un filet disent la même chose sans encadrer. |
-| Le papier millimétré du fond | Une grille de fond décore sans rien structurer : elle se voyait derrière chaque paragraphe et ne portait aucune information. |
 
 ## Démarrer
 
@@ -178,8 +51,8 @@ Modifier ce fichier met à jour, d'un coup :
 - l'index de la palette de commandes ;
 - le CV que produit `cv`, et la version imprimée du site.
 
-Chaque champ traduisible est un objet `{ fr, en }`. Une chaîne nue est utilisée
-telle quelle dans les deux langues — pratique pour les noms propres.
+Chaque champ traduisible est un objet `{ fr, en }`. Une chaîne nue est
+utilisée telle quelle dans les deux langues (pratique pour les noms propres).
 
 ```js
 export const projects = [
@@ -188,7 +61,7 @@ export const projects = [
     name: 'Atlas',
     year: '2026',
     status: 'planned',                // live | wip | planned | archived
-    tagline: { fr: '…', en: '…' },    // une ligne, 90 caractères maximum
+    tagline: { fr: '…', en: '…' },
     summary: { fr: '…', en: '…' },
     highlights: { fr: ['…'], en: ['…'] },
     metrics: [{ label: { fr: 'commits/s', en: 'commits/s' }, value: '~9k' }],
@@ -205,9 +78,8 @@ rangée, lien relatif là où il faut une URL absolue, ou nom de techno accentu�
 laissé en français dans la version anglaise.
 
 **`status` sert à ne pas mentir.** Un projet qui n'est pas commencé n'est ni
-`live` ni `wip` : il est `planned`, et la page l'affiche « à venir ». La
-description dit alors une intention, pas un résultat — c'est le statut qui fait
-la différence, et il est visible sur chaque rangée.
+`live` ni `wip` : il est `planned`, et la page l'affiche « à venir », en gris
+plutôt qu'en couleur. La description dit alors une intention, pas un résultat.
 
 > ⚠️ Si tu repars de ce dépôt : le contenu de `profile.js` est le parcours de
 > son auteur. Remplace-le par le tien avant de publier.
@@ -216,8 +88,8 @@ la différence, et il est visible sur chaque rangée.
 
 ![Terminal](docs/captures/terminal.png)
 
-Ouvrir : <kbd>`</kbd> ou <kbd>²</kbd> (même touche physique en AZERTY), la
-phrase sous l'accroche, ou le bouton `>_` du sommaire.
+Ouvrir : <kbd>`</kbd> ou <kbd>²</kbd> (même touche physique en AZERTY), ou le
+bouton `▸ terminal` de la barre de statut.
 
 ```
 /
@@ -227,16 +99,38 @@ phrase sous l'accroche, ou le bouton `>_` du sommaire.
 └── stack/            un .txt par groupe
 ```
 
-Vingt-trois commandes : `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `find`,
-`grep`, `open`, `whoami`, `neofetch`, `portrait`, `wallpaper`, `cv`, `print`,
-`mail`, `theme`, `lang`, `history`, `clear`, `date`, `echo`, `uname`, `exit` —
-plus quelques-unes qui ne sont pas dans `help`.
+Vingt-deux commandes : `ls` (`-a`, `-l`), `cd`, `pwd`, `cat`, `tree`, `find`,
+`grep`, `open`, `whoami`, `neofetch`, `cv`, `print`, `mail`, `theme`, `lang`,
+`history`, `clear`, `date`, `echo`, `uname`, `exit` — plus quelques-unes qui
+ne sont pas dans `help`.
 
 - <kbd>Tab</kbd> complète les commandes et les chemins (préfixe commun le plus long) ;
 - <kbd>↑</kbd> <kbd>↓</kbd> parcourent un historique persistant ;
 - <kbd>Ctrl</kbd>+<kbd>L</kbd> efface, <kbd>Ctrl</kbd>+<kbd>C</kbd> annule, <kbd>Échap</kbd> ferme ;
 - un pipe est accepté, vers `grep` uniquement : `cat about.md | grep clarté` ;
 - une commande mal tapée propose la plus proche (distance de Levenshtein).
+
+Le terminal est un **bonus, jamais un péage** : tout le contenu est lisible
+sans jamais l'ouvrir.
+
+## La séquence de démarrage
+
+![Démarrage](docs/captures/boot.png)
+
+Le site s'ouvre sur un log de boot. C'est une petite mise en scène assumée —
+elle annonce la couleur en trois secondes — mais elle est tenue par trois
+garde-fous, sans quoi elle deviendrait une nuisance :
+
+- **une seule fois par session** (`sessionStorage`) : recharger la page ne la
+  rejoue pas ;
+- **jamais sur un lien profond** : arriver sur `/projets/theory` depuis un
+  lien partagé doit montrer la fiche, pas un écran de chargement ;
+- **jamais en `prefers-reduced-motion`**, et n'importe quelle touche ou un
+  clic la coupe immédiatement.
+
+Les trois se vérifient dans le harnais navigateur : chacun peut se casser sans
+rien casser d'autre. Le nombre de commandes annoncé (« shell prêt — 22
+commandes ») est compté sur le registre, pas écrit à la main.
 
 ## Raccourcis clavier
 
@@ -261,34 +155,52 @@ src/js/commands.js      registre des commandes (pur, testable)
 src/js/palette.js       palette Ctrl+K
 src/js/router.js        routes réelles (History API), analyse pure
 src/js/i18n.js          FR/EN, sans rechargement
-src/js/repl.js          la question qui s'écrit, sur l'accueil
-src/js/ascii.js         l'image convertie en caractères, dans le navigateur
+src/js/repl.js          le REPL animé de l'accueil
+src/js/boot.js          séquence de démarrage (une fois par session)
 src/js/effects.js       révélation au défilement + easter egg
-src/styles/main.css     design system
+src/styles/main.css     design system « éditeur »
 scripts/fetch-fonts.mjs auto-hébergement des polices
-tests/                  48 tests node:test — logique pure
-tests-e2e/browser.mjs   27 vérifications navigateur
-tests-e2e/make-png.mjs  encodeur PNG minimal (mire du harnais, sans dépendance)
+tests/                  46 tests node:test — logique pure
+tests-e2e/browser.mjs   21 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
-dans le sommaire, entrée de la palette, commande `cd`, bouton Précédent du
+dans l'explorateur, entrée de la palette, commande `cd`, bouton Précédent du
 navigateur, lien profond — tout converge au même endroit, qui met à jour la
-section, l'URL, le sommaire et le répertoire courant du shell.
+section, l'URL, les onglets, l'explorateur et le répertoire courant du shell.
+
+## Design
+
+Filiation assumée avec le système « Terminal » du projet *Theory* : monospace
+pour l'ossature, sans-serif pour la prose, filets fins, un seul accent, palette
+d'éditeur claire et sombre. Ce qui change ici : l'interface n'imite pas un
+terminal, elle **est** un éditeur ouvert sur un dépôt — barre latérale =
+arborescence, section = buffer avec son onglet et sa gouttière de numéros de
+ligne, barre de statut en bas, terminal escamotable.
+
+- **Typographie** : JetBrains Mono (ossature) + Inter (prose), auto-hébergées.
+- **Couleur** : un seul accent, un **bleu** décliné clair/sombre — celui des
+  dossiers dans un `ls`, celui d'un lien dans un éditeur. Un vert phosphore a
+  été essayé et retiré : il tirait l'ensemble vers l'écran cathodique, alors
+  que la page se veut un poste de travail d'aujourd'hui. Le vert ne reste que
+  là où il veut dire quelque chose : le `[ ok ]` du log de démarrage et le `+`
+  d'un diff. Tous les couples texte/fond visent au minimum le ratio AA (4,5:1).
+- **Pas de photo de profil.** Un portrait a été essayé et retiré : l'identité
+  d'un poste de travail, c'est son invite. Le site s'identifie par son `~/` et
+  par la vignette en caractères de `neofetch`.
+- **La stack sans jauges.** « Quatre sur cinq » ne veut rien dire pour qui lit,
+  et beaucoup trop pour qui l'écrit. Une phrase honnête à la place.
+- **Mouvement** : `prefers-reduced-motion` coupe le REPL animé, la séquence de
+  démarrage, la révélation au défilement et l'easter egg.
+
+![Parcours](docs/captures/parcours.png)
 
 ## Accessibilité
 
 Lien d'évitement, navigation entièrement au clavier, `:focus-visible` visible
 partout, contrastes vérifiés dans les deux thèmes, sortie du terminal en
-`role="log"` / `aria-live="polite"`, boutons à glyphe étiquetés en `aria-label`
-suivant la langue, animations coupées en `prefers-reduced-motion`.
-
-Un test du harnais vérifie qu'aucun chrome retiré (onglets, gouttière,
-séquence de démarrage) n'est revenu, et que le terminal est bien fermé au
-chargement. Le portrait en caractères est vérifié de bout en bout : le harnais
-génère une mire PNG (`tests-e2e/make-png.mjs`, trente lignes de zlib, sans
-dépendance) et contrôle la largeur, la hauteur et la variété des niveaux du
-dessin obtenu.
+`role="log"` / `aria-live="polite"`, animations coupées sur demande du
+système.
 
 ## Déploiement
 

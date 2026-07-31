@@ -4,184 +4,178 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Patrick Choumi — Élève ingénieur, génie informatique</title>
-  <meta name="description" content="Portfolio de Patrick Choumi, élève ingénieur en génie informatique à Yaoundé. Une page qui se lit simplement — et qui s'explore aussi au terminal, pour qui en a envie." />
-  <meta name="theme-color" content="#101215" />
+  <meta name="description" content="Portfolio d’Ismaël Patrick Choumi Nami, élève ingénieur en génie informatique à Yaoundé. Un portfolio qui est aussi un système de fichiers : lisez la page, ou explorez-la au terminal." />
+  <meta name="theme-color" content="#0d1013" />
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23101215'/><text x='50' y='70' font-family='monospace' font-size='58' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d1013'/><text x='50' y='70' font-family='monospace' font-size='58' font-weight='700' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Patrick Choumi — Élève ingénieur, génie informatique" />
-  <meta property="og:description" content="Élève ingénieur en génie informatique à Yaoundé. Une page qui se lit simplement — et qui s'explore aussi au terminal." />
+  <meta property="og:description" content="Un portfolio qui est aussi un système de fichiers. Lisez la page, ou explorez-la au terminal." />
 
   <!-- Polices auto-hébergées (voir scripts/fetch-fonts.mjs) : aucune requête
        vers un tiers au chargement. Le portfolio affirme ne rien envoyer
        nulle part — un lien vers un CDN de polices ferait mentir la page. -->
-  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/jetbrains-mono-500.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body>
 
 <a class="skip-link" href="#main" data-i18n="a11y.skip">Aller au contenu</a>
 
-<button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="sidebar">≡</button>
+<!-- Séquence de démarrage — injectée puis retirée par src/js/boot.js.
+     Ne s'affiche qu'une fois par session, et jamais en reduced-motion. -->
+<div id="boot" class="boot hidden" aria-hidden="true"></div>
 
-<!-- ═══════════ SOMMAIRE ═══════════ -->
+<button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="sidebar">▤</button>
+
+<!-- ═══════════ EXPLORATEUR ═══════════ -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-head">
-    <!-- La photo de profil. Cliquer dessus l'ouvre en caractères dans le
-         terminal : c'est le pont entre les deux vues, appliqué au visage.
-         Masquée tant qu'aucun fichier n'est déposé (voir src/js/main.js). -->
-    <button class="avatar" id="avatar" hidden>
-      <img id="avatar-img" alt="" width="46" height="46" />
-    </button>
     <button class="brand" data-nav="home" aria-label="Accueil">
       <span class="brand-prompt" aria-hidden="true">~/</span><span id="brand-name">patrickchoumi</span><span class="brand-caret" aria-hidden="true"></span>
     </button>
-    <p class="brand-role" id="brand-role"></p>
+    <p class="brand-sub" id="brand-role"></p>
     <p class="availability" id="availability"></p>
   </div>
 
-  <nav class="tree" id="tree" aria-label="Sommaire"></nav>
+  <nav class="tree" id="tree" aria-label="Contenu du site"></nav>
 
   <div class="sidebar-foot">
-    <button class="foot-btn" id="btn-search" aria-label="Rechercher (Ctrl K)">⌕</button>
-    <button class="foot-btn" id="btn-lang" aria-label="Changer de langue">FR</button>
-    <button class="foot-btn" id="btn-theme" aria-label="Changer de thème">◐</button>
-    <button class="foot-btn" id="btn-term" aria-label="Ouvrir le terminal">&gt;_</button>
+    <button class="icon-btn" id="btn-search" data-title="palette" aria-label="Palette de commandes (Ctrl K)">⌘K</button>
+    <button class="icon-btn" id="btn-lang" aria-label="Changer de langue">FR</button>
+    <button class="icon-btn" id="btn-theme" aria-label="Changer de thème">◐</button>
   </div>
 </aside>
 <div class="nav-scrim hidden" id="nav-scrim"></div>
 
-<!-- ═══════════ CONTENU ═══════════ -->
+<!-- ═══════════ BUFFERS ═══════════ -->
 <main id="main">
+  <div class="buffer-tabs" id="tabs" role="tablist" aria-label="Fichiers ouverts"></div>
 
-  <section id="home" class="section is-active">
+  <section id="home" class="section is-active" data-file="README.md">
     <div class="buffer">
-      <header class="hero">
-        <p class="kicker" id="hero-kicker"></p>
-        <h1 class="hero-title" id="hero-title"></h1>
-        <p class="hero-identity" id="hero-identity"></p>
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body">
+        <header class="hero">
+          <p class="section-kicker" id="hero-kicker"></p>
+          <h1 class="hero-title" id="hero-title"></h1>
+          <p class="hero-identity" id="hero-identity"></p>
 
-        <!-- Le site répond à des questions plutôt que de se décrire. Purement
-             typographique : plus de fausse fenêtre de terminal, juste une
-             question qui s'écrit. Décoratif → le titre et la lede portent le
-             sens pour les lecteurs d'écran. -->
-        <div class="repl" aria-hidden="true">
-          <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-q" id="repl-q"></span></p>
-          <p class="repl-a" id="repl-a"></p>
-          <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-cursor"></span></p>
+          <!-- REPL animé : le site répond à des questions plutôt que de se
+               décrire. Décoratif → le titre et la lede portent le sens. -->
+          <div class="repl" aria-hidden="true">
+            <div class="repl-bar">
+              <span class="repl-dots"><i></i><i></i><i></i></span>
+              <span class="repl-name" id="repl-name">portfolio — repl</span>
+            </div>
+            <div class="repl-body">
+              <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-q" id="repl-q"></span></p>
+              <p class="repl-a" id="repl-a"></p>
+              <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-cursor"></span></p>
+            </div>
+          </div>
+
+          <p class="hero-lede" id="hero-lede"></p>
+
+          <div class="hero-actions">
+            <button class="cta" data-nav="projects">
+              <span data-i18n="cta.projects">Voir les projets</span>
+              <span class="cta-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="cta is-ghost" id="cta-term">
+              <span data-i18n="cta.term">…ou explorer au terminal</span>
+              <kbd>`</kbd>
+            </button>
+          </div>
+        </header>
+
+        <section class="block reveal">
+          <h2 class="block-title" data-i18n="block.principles">Convictions</h2>
+          <ol class="principles" id="principles"></ol>
+        </section>
+
+        <section class="block reveal">
+          <h2 class="block-title" data-i18n="block.facts">Fiche</h2>
+          <div class="facts" id="facts"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section" data-file="about.md">
+    <div class="buffer">
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body">
+        <div class="section-head">
+          <p class="section-kicker">about.md</p>
+          <h1 class="section-title" id="about-title"></h1>
         </div>
+        <div class="prose" id="about-body"></div>
+      </div>
+    </div>
+  </section>
 
-        <p class="hero-lede" id="hero-lede"></p>
-
-        <div class="hero-actions">
-          <button class="cta" data-nav="projects">
-            <span data-i18n="cta.projects">Voir les projets</span>
-            <span class="cta-arrow" aria-hidden="true">→</span>
-          </button>
+  <section id="experience" class="section" data-file="experience/">
+    <div class="buffer">
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body">
+        <div class="section-head">
+          <p class="section-kicker">git log --graph</p>
+          <h1 class="section-title" data-i18n="exp.title">Parcours</h1>
+          <p class="section-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque étape de la formation est un commit ; les lignes marquées sont ce qui a été appris.</p>
         </div>
-
-        <!-- L'invitation au terminal est une phrase, pas un bouton voyant :
-             le site se lit entièrement sans jamais l'ouvrir. -->
-        <p class="aside-hint">
-          <button class="hint-btn" id="hint-term" data-i18n="hint.term">Ce site s’explore aussi au terminal</button>
-          <kbd>`</kbd>
-        </p>
-      </header>
-
-      <section class="block reveal">
-        <h2 class="block-title" data-i18n="block.principles">Convictions</h2>
-        <ol class="principles" id="principles"></ol>
-      </section>
-
-      <section class="block reveal">
-        <h2 class="block-title" data-i18n="block.facts">Fiche</h2>
-        <dl class="facts" id="facts"></dl>
-      </section>
+        <div class="gitlog" id="gitlog"></div>
+      </div>
     </div>
   </section>
 
-  <section id="about" class="section">
+  <section id="projects" class="section" data-file="projects/">
     <div class="buffer">
-      <div class="section-head">
-        <p class="kicker">about.md</p>
-        <h1 class="section-title" id="about-title"></h1>
-      </div>
-      <!-- Le portrait : même fichier que le médaillon du sommaire, en plus
-           grand, et qui bascule sur sa version en caractères d'un clic. La
-           thèse du site — une source, deux rendus — rendue visible sans
-           ouvrir le terminal. Masqué tant qu'aucune image n'est déposée. -->
-      <figure class="portrait" id="portrait" hidden>
-        <button class="portrait-flip" id="portrait-flip" aria-pressed="false">
-          <span class="portrait-face"><img id="portrait-img" alt="" /></span>
-          <span class="portrait-back" aria-hidden="true"><pre id="portrait-ascii"></pre></span>
-        </button>
-        <figcaption class="portrait-note" id="portrait-note"></figcaption>
-      </figure>
-
-      <div class="prose" id="about-body"></div>
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body" id="projects-body"></div>
     </div>
   </section>
 
-  <section id="experience" class="section">
+  <section id="stack" class="section" data-file="stack/">
     <div class="buffer">
-      <div class="section-head">
-        <p class="kicker">git log</p>
-        <h1 class="section-title" data-i18n="exp.title">Parcours</h1>
-        <p class="section-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque étape est un commit ; les lignes marquées sont ce qui a été appris.</p>
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body">
+        <div class="section-head">
+          <p class="section-kicker">stack/</p>
+          <h1 class="section-title" data-i18n="stack.title">Stack</h1>
+          <p class="section-lede" data-i18n="stack.lede">Ce que j’utilise, et ce que j’en sais. Le C d’abord, le reste par-dessus.</p>
+        </div>
+        <div id="stack-body"></div>
       </div>
-      <div class="gitlog" id="gitlog"></div>
     </div>
   </section>
 
-  <section id="projects" class="section">
-    <div class="buffer" id="projects-body"></div>
-  </section>
-
-  <section id="stack" class="section">
+  <section id="contact" class="section" data-file="contact.md">
     <div class="buffer">
-      <div class="section-head">
-        <p class="kicker">stack/</p>
-        <h1 class="section-title" data-i18n="stack.title">Stack</h1>
-        <p class="section-lede" data-i18n="stack.lede">Ce que j’utilise, et ce que j’en sais. Le C d’abord, le reste par-dessus.</p>
-      </div>
-      <div id="stack-body"></div>
-    </div>
-  </section>
-
-  <section id="contact" class="section">
-    <div class="buffer">
-      <div class="section-head">
-        <p class="kicker">contact.md</p>
-        <h1 class="section-title" id="contact-title"></h1>
-        <p class="section-lede" id="contact-lede"></p>
-      </div>
-      <div class="contact-links" id="contact-links"></div>
-      <p class="note" id="contact-note"></p>
-      <div class="foot">
-        <span id="foot-left"></span>
-        <span id="foot-right"></span>
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="buffer-body">
+        <div class="section-head">
+          <p class="section-kicker">contact.md</p>
+          <h1 class="section-title" id="contact-title"></h1>
+          <p class="section-lede" id="contact-lede"></p>
+        </div>
+        <div class="contact-links" id="contact-links"></div>
+        <p class="note" id="contact-note"></p>
+        <div class="foot">
+          <span id="foot-left"></span>
+          <span id="foot-right"></span>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
-<!-- ═══════════ BARRE DE STATUT ═══════════ -->
-<footer class="statusbar">
-  <span class="status-mode" id="status-mode">LIRE</span>
-  <span class="status-path" id="status-path">~</span>
-  <span class="status-spacer"></span>
-  <span class="status-hint" id="status-hint"></span>
-  <button class="status-btn" id="status-term">
-    <span aria-hidden="true">▸</span> <span data-i18n="status.terminal">terminal</span>
-  </button>
-</footer>
-
 <!-- ═══════════ TERMINAL ═══════════ -->
 <section class="term" id="term" aria-label="Terminal" aria-hidden="true">
   <div class="term-bar">
-    <span class="term-bar-path" id="term-bar-path"></span>
+    <span class="term-bar-title">bash — portfolio</span>
     <span class="term-bar-spacer"></span>
     <span class="term-hint" id="term-hint"></span>
     <button class="term-close" id="term-close" aria-label="Fermer le terminal">✕</button>
@@ -192,6 +186,17 @@
     <input class="term-input" id="term-input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Ligne de commande" />
   </div>
 </section>
+
+<!-- ═══════════ BARRE DE STATUT ═══════════ -->
+<footer class="statusbar">
+  <span class="status-mode" id="status-mode">LIRE</span>
+  <span class="status-path" id="status-path">~/</span>
+  <span class="status-spacer"></span>
+  <span class="status-hint" id="status-hint"></span>
+  <button class="status-btn" id="status-term">
+    <span aria-hidden="true">▸</span><span data-i18n="status.terminal">terminal</span>
+  </button>
+</footer>
 
 <script type="module" src="/src/js/main.js"></script>
 </body>

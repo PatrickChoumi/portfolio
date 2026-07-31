@@ -61,6 +61,9 @@ export function colorize(content) {
     if (/^\s*\d+\.\s/.test(l)) return html(escapeHtml(l).replace(/^(\s*)(\d+\.)/, '$1<span class="num">$2</span>'));
     if (l.startsWith('$ ')) return html(`<span class="p">$</span> <span class="kw">${escapeHtml(l.slice(2))}</span>`);
     if (/^\*\s/.test(l)) return html(`<span class="p">*</span>${escapeHtml(l.slice(1))}`);
+    if (/^https?:|@/.test(l) === false && /█|░/.test(l)) {
+      return html(escapeHtml(l).replace(/([█░]+)/g, '<span class="meter">$1</span>'));
+    }
     if (/https?:\/\//.test(l)) {
       return html(escapeHtml(l).replace(/(https?:\/\/[^\s]+)/g, '<a class="lnk" href="$1" target="_blank" rel="noopener">$1</a>'));
     }
@@ -71,24 +74,6 @@ export function colorize(content) {
 export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-
-// Largeur de référence du portrait en caractères. Les réglages de
-// src/js/ascii.js ont été calibrés à l'œil sur cette taille : `portrait` et
-// `neofetch` s'y tiennent tous les deux, pour que le dessin soit le même
-// partout.
-export const PORTRAIT_COLS = 52;
-
-// Vignette de secours : utilisée par `neofetch` tant qu'aucune photo n'est
-// déposée dans public/avatar.png.
-const FALLBACK_ART = [
-  '   ▄▄▄▄▄▄▄▄▄▄▄   ',
-  '  █ ▄▄▄▄▄▄▄▄▄ █  ',
-  '  █ █  ~/   █ █  ',
-  '  █ █  ▸_   █ █  ',
-  '  █ █▄▄▄▄▄▄▄█ █  ',
-  '  █▄▄▄▄▄▄▄▄▄▄▄█  ',
-  '   ▀▀▀▀▀▀▀▀▀▀▀   '
-];
 
 // ─── Le registre ──────────────────────────────────────────────────────
 // `usage` alimente `help` ; `complete` alimente la touche Tab.
@@ -242,17 +227,19 @@ export const COMMANDS = {
 
   neofetch: {
     usage: { fr: 'la fiche machine', en: 'the machine card' },
-    // Un vrai neofetch affiche le logo de la distribution à gauche et les
-    // informations à droite. Ici le « logo » est le portrait de l'auteur,
-    // converti en caractères depuis le même fichier que celui du sommaire :
-    // une seule source, deux rendus — le principe du site, appliqué au visage.
-    run: async (args, ctx) => {
-      // Le dessin prend la moitié gauche, la fiche tient dans le reste : on
-      // laisse toujours de quoi écrire « Role: … » à droite.
-      const art = (await ctx.ascii(Math.max(24, Math.min(PORTRAIT_COLS, ctx.columns() - 40)))) || FALLBACK_ART;
+    run: (args, ctx) => {
+      const art = [
+        '   ▄▄▄▄▄▄▄▄▄▄▄   ',
+        '  █ ▄▄▄▄▄▄▄▄▄ █  ',
+        '  █ █  ~/   █ █  ',
+        '  █ █  ▸_   █ █  ',
+        '  █ █▄▄▄▄▄▄▄█ █  ',
+        '  █▄▄▄▄▄▄▄▄▄▄▄█  ',
+        '   ▀▀▀▀▀▀▀▀▀▀▀   '
+      ];
       const info = [
         [`${identity.handle}@${host}`, ''],
-        ['─'.repeat(26), ''],
+        ['─'.repeat(24), ''],
         [ctx.lang === 'en' ? 'Role' : 'Rôle', ctx.tx(identity.role)],
         [ctx.lang === 'en' ? 'Location' : 'Lieu', ctx.tx(identity.location)],
         [ctx.lang === 'en' ? 'Projects' : 'Projets', String(projects.length)],
@@ -262,85 +249,15 @@ export const COMMANDS = {
         [ctx.lang === 'en' ? 'Theme' : 'Thème', ctx.theme()],
         [ctx.lang === 'en' ? 'Uptime' : 'Depuis', ctx.uptime()]
       ];
-      const width = Math.max(...art.map((l) => l.length));
       const rows = Math.max(art.length, info.length);
       const out = [];
-      // Les informations sont centrées verticalement sur le portrait : collées
-      // en haut, la fiche paraît bancale dès que le dessin est plus haut.
-      const offset = Math.max(0, Math.floor((art.length - info.length) / 2));
       for (let i = 0; i < rows; i++) {
-        const left = (art[i] || '').padEnd(width);
-        const entry = info[i - offset];
-        const right = entry
-          ? (entry[1] ? `<b>${escapeHtml(entry[0])}</b>: ${escapeHtml(entry[1])}` : `<b>${escapeHtml(entry[0])}</b>`)
-          : '';
-        out.push(html(`<span class="art">${escapeHtml(left)}</span>  ${right}`));
+        const left = (art[i] || ' '.repeat(17));
+        const [k, v] = info[i] || ['', ''];
+        const right = v ? `<b>${escapeHtml(k)}</b>: ${escapeHtml(v)}` : `<b>${escapeHtml(k)}</b>`;
+        out.push(html(`<span class="p">${escapeHtml(left)}</span>  ${right}`));
       }
       return out;
-    }
-  },
-
-  portrait: {
-    usage: { fr: 'affiche la photo de profil en caractères', en: 'render the profile picture as characters' },
-    run: async (args, ctx) => {
-      // Cinquante-deux colonnes par défaut : c'est la taille sur laquelle le
-      // rendu a été calibré, et celle qui ressemble le plus à l'image. Plus
-      // large, le dessin s'éclaircit et se dilue ; plus étroit, il sature.
-      // La largeur du terminal reste la limite — sur un téléphone, le dessin
-      // s'adapte plutôt que de déborder.
-      const asked = Number(args[0]);
-      const cols = Math.min(120, Math.max(20, asked || Math.min(PORTRAIT_COLS, ctx.columns())));
-      const art = await ctx.ascii(cols);
-      if (!art) {
-        // Le chemin vient des données : le message ne peut pas mentir sur
-        // l'endroit où déposer le fichier.
-        const where = `public${identity.avatar || '/avatar.png'}`;
-        return [
-          dim(ctx.lang === 'en'
-            ? `No picture yet. Drop one at ${where} and reload.`
-            : `Pas encore de photo. Dépose-la dans ${where} et recharge.`)
-        ];
-      }
-      const out = art.map((l) => html(`<span class="art">${escapeHtml(l)}</span>`));
-      // On dit comment demander plus grand, sinon personne ne devine que
-      // l'argument existe.
-      if (!asked) {
-        out.push(dim(ctx.lang === 'en'
-          ? '`portrait 90` for a larger one.'
-          : '`portrait 90` pour une version plus grande.'));
-      }
-      return out;
-    }
-  },
-
-  wallpaper: {
-    usage: { fr: 'télécharge le portrait en fond d’écran', en: 'download the portrait as a wallpaper' },
-    run: async (args, ctx) => {
-      const [a, b] = args;
-      // `wallpaper 2560x1440` ou `wallpaper 1920x1080 80` (largeur en
-      // caractères). Sans rien, la résolution de l'écran et la largeur de
-      // référence du portrait.
-      const size = /^(\d+)x(\d+)$/i.exec(a || '');
-      const width = size ? Number(size[1]) : ctx.screen().width;
-      const height = size ? Number(size[2]) : ctx.screen().height;
-      const cols = Math.min(160, Math.max(20, Number(size ? b : a) || PORTRAIT_COLS));
-
-      const art = await ctx.ascii(cols);
-      if (!art) {
-        const where = `public${identity.avatar || '/avatar.png'}`;
-        return [dim(ctx.lang === 'en'
-          ? `No picture yet. Drop one at ${where} and reload.`
-          : `Pas encore de photo. Dépose-la dans ${where} et recharge.`)];
-      }
-
-      const name = `portrait-${width}x${height}.png`;
-      ctx.download(ctx.png(art, { width, height }), name);
-      return [
-        html(`<span class="is-ok">↓</span> ${escapeHtml(name)}`),
-        dim(ctx.lang === 'en'
-          ? 'Try `wallpaper 3840x2160` or `wallpaper 1920x1080 90` for a finer drawing.'
-          : 'Essaie `wallpaper 3840x2160`, ou `wallpaper 1920x1080 90` pour un dessin plus fin.')
-      ];
     }
   },
 
