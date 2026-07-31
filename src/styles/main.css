@@ -28,7 +28,12 @@
   --surface-2: #eceae4;
   --text: #16181a;
   --text-secondary: #4b5158;
-  --text-tertiary: #6a7078;      /* ≥ 4.5:1 sur --bg */
+  /* Mesuré sur la surface la plus exigeante — --surface-2, celle de la barre
+     de statut et de la bande d'onglets —, pas seulement sur --bg. L'ancienne
+     valeur tenait 4,54:1 sur le fond de page mais tombait à 4,15:1 là où elle
+     servait vraiment. Un token dont le commentaire ne nomme pas le pire cas
+     ne garantit rien. Plancher actuel : 4,62:1. */
+  --text-tertiary: #63696f;
   --border: #e3e1d9;
   --border-strong: #c9c6bb;
   --code-bg: #edebe4;
@@ -109,7 +114,7 @@
   --surface-2: #1a1f25;
   --text: #c8d2d8;
   --text-secondary: #98a3ab;
-  --text-tertiary: #838e97;      /* ≥ 4.5:1 sur --bg */
+  --text-tertiary: #838e97;      /* ≥ 4,96:1 sur --surface-2, le pire cas */
   --border: #1f262c;
   --border-strong: #333c44;
   --code-bg: #161b20;
@@ -250,6 +255,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 24px;      /* cible tactile : WCAG 2.2, 2.5.8 */
   font-family: var(--font-mono);
   font-size: var(--fs-md);
   font-weight: 500;
@@ -636,6 +642,7 @@ main {
   font-weight: 500;
   color: var(--text);
   cursor: pointer;
+  min-height: 24px;      /* cible tactile : WCAG 2.2, 2.5.8 */
   text-decoration: underline;
   text-underline-offset: 6px;
   text-decoration-thickness: 1px;
@@ -796,6 +803,7 @@ main {
 .project-back {
   display: inline-flex; align-items: center; gap: var(--space-2);
   background: none; border: none; padding: 0;
+  min-height: 24px;      /* cible tactile : WCAG 2.2, 2.5.8 */
   font-family: var(--font-mono); font-size: var(--fs-sm);
   color: var(--text-tertiary); cursor: pointer;
   margin-bottom: var(--space-8);
@@ -909,10 +917,14 @@ main {
 .status-path { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .status-spacer { flex: 1; }
 .status-btn {
-  background: none; border: none; padding: 2px var(--space-2);
+  background: none; border: none; padding: 0 var(--space-2);
   color: var(--text-secondary); cursor: pointer;
   border-radius: 3px;
   font-family: inherit; font-size: inherit;
+  /* La barre de statut est haute de 30 px : le bouton la remplit plutôt que
+     de flotter au milieu — 24 px minimum de hauteur cliquable, atteints sans
+     rien agrandir visuellement. */
+  min-height: 24px;
   display: inline-flex; align-items: center; gap: var(--space-2);
   transition: color var(--t), background var(--t);
 }
@@ -955,7 +967,11 @@ main {
 .term-close {
   background: none; border: none; cursor: pointer;
   color: var(--text-tertiary); font-family: var(--font-mono);
-  padding: 2px var(--space-2); border-radius: 3px;
+  /* 23 × 19 px auparavant : la plus petite cible du site, et celle qu'on vise
+     au pouce sur un téléphone. Passée à 28 × 28 sans changer le glyphe. */
+  display: grid; place-items: center;
+  min-width: 28px; min-height: 28px;
+  padding: 0; border-radius: 3px;
 }
 .term-close:hover { color: var(--danger); background: var(--surface); }
 
@@ -988,19 +1004,29 @@ main {
 .term-line b { color: var(--accent); font-weight: 500; }   /* clés du neofetch */
 .term-line .meter { color: var(--accent); letter-spacing: 0.1em; }
 
+/* L'invite ne se coupe pas et ne rétrécit pas — c'est un chemin, l'amputer
+   n'aide personne. Mais `patrickchoumi@portfolio:~/experience$` fait déjà
+   250 px : sur un téléphone il ne restait rien pour la saisie, et le champ
+   tombait à zéro pixel de large. On ne pouvait littéralement plus taper.
+   La rangée passe donc à la ligne, et le champ garde un plancher de largeur :
+   quand l'invite est trop longue, la saisie descend en dessous — exactement
+   ce que fait un vrai terminal. Aucun point de rupture là-dedans : c'est la
+   longueur réelle de l'invite qui décide, et elle change avec le dossier. */
 .term-input-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4) var(--space-4);
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
 }
-.term-prompt { color: var(--accent); white-space: nowrap; }
+.term-prompt { color: var(--accent); white-space: nowrap; flex-shrink: 0; }
 .term-prompt .host { color: var(--text-tertiary); }
 .term-input {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 12ch;
+  min-width: 12ch;
+  min-height: 28px;      /* cible tactile : WCAG 2.2, 2.5.8 */
   background: none;
   border: none;
   outline: none;
@@ -1113,8 +1139,20 @@ main {
 
 @media (max-width: 860px) {
   .nav-toggle { display: grid; place-items: center; }
-  .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-pop); }
-  .sidebar.is-open { transform: none; }
+  /* Escamotée, elle sort AUSSI du parcours clavier et de l'arbre
+     d'accessibilité. Un simple translateX la déplace hors de l'écran mais la
+     laisse tabulable : on traverse six liens invisibles avant d'atteindre le
+     contenu, et un lecteur d'écran les annonce. `visibility: hidden` retire
+     tout ça, et se transitionne — contrairement à `display: none` — donc
+     l'animation d'ouverture est conservée. */
+  .sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    box-shadow: var(--shadow-pop);
+    transition: transform var(--t-slow), visibility var(--t-slow),
+                background var(--t), border-color var(--t);
+  }
+  .sidebar.is-open { transform: none; visibility: visible; }
   main { margin-left: 0; padding-top: var(--space-16); }
   .term { height: 68vh; }
   .block { padding: var(--space-12) 0; }
@@ -1124,6 +1162,12 @@ main {
 
 @media (max-width: 520px) {
   .buffer { padding: var(--space-8) var(--space-4) var(--space-12); }
+  /* L'invite complète — « patrickchoumi@portfolio:~/projects/kairus$ » — fait
+     335 px : sur un téléphone de 320 px elle sortait du cadre à elle seule.
+     On garde le chemin, qui change et informe ; on lâche la machine, qui ne
+     varie jamais. C'est l'arbitrage de n'importe quel PS1 dans un terminal
+     serré. */
+  .term-prompt .host { display: none; }
   /* Sur une colonne étroite, l'identité se lit ligne par ligne : les points
      de séparation se retrouveraient orphelins en fin de ligne. */
   .hero-identity { flex-direction: column; gap: var(--space-1); }

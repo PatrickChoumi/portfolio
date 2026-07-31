@@ -167,6 +167,45 @@ export const experience = [
 // décrivent donc une intention, pas un résultat — c'est le statut qui le dit.
 export const projects = [
   {
+    slug: 'kairus',
+    name: 'Kairus',
+    year: '2026',
+    status: 'wip',
+    tagline: {
+      fr: 'Une messagerie qui fait l’essentiel, et rien autour.',
+      en: 'A messenger that does the essentials, and nothing around them.'
+    },
+    summary: {
+      fr: 'Une messagerie temps réel complète — conversations, groupes, fichiers, vocaux, appels audio de navigateur à navigateur — dans la disposition que tout le monde connaît déjà. Ce qui la distingue n’est pas une grammaire à réapprendre : c’est ce qui a été retiré. Pas d’écran de réglages ; `⌘K` ouvre un point de commande unique qui cherche, crée, bascule le thème et pose ses questions une à une.',
+      en: 'A complete real-time messenger — conversations, groups, files, voice notes, browser-to-browser audio calls — in the layout everyone already knows. What sets it apart is not a grammar to relearn: it is what was taken out. No settings screen; `⌘K` opens a single command point that searches, creates, switches theme and asks its questions one at a time.'
+    },
+    highlights: {
+      fr: [
+        'Temps réel par WebSocket : envoi optimiste, réconciliation, file d’attente hors ligne et reconnexion à repli exponentiel.',
+        'Appels audio en WebRTC — le serveur relaie les présentations, jamais la voix, et applique aux appels les règles des messages.',
+        'Sécurité écrite comme une politique : limitation de débit par adresse *et* par nom d’usage, révocation par version de jeton, CSP sans `unsafe-inline` avec le script de thème autorisé par son empreinte.',
+        'Pas d’annuaire : hors de vos conversations, seul un nom d’usage exact résout. Un annuaire parcourable plus une boîte ouverte est un outil de harcèlement clé en main.',
+        'Mouvement calculé image par image par des ressorts interruptibles, sans bibliothèque d’animation.'
+      ],
+      en: [
+        'Real time over WebSocket: optimistic send, reconciliation, offline queue and exponential-backoff reconnection.',
+        'WebRTC audio calls — the server relays introductions, never the voice, and applies the message rules to calls.',
+        'Security written as a policy: rate limiting per address *and* per handle, revocation by token version, CSP with no `unsafe-inline` and the theme script allowed by its hash.',
+        'No directory: outside your conversations, only an exact handle resolves. A browsable directory plus an open inbox is a ready-made harassment tool.',
+        'Motion integrated frame by frame by interruptible springs, with no animation library.'
+      ]
+    },
+    metrics: [
+      { label: { fr: 'tests', en: 'tests' }, value: '176' },
+      { label: { fr: 'client compressé', en: 'client gzipped' }, value: '57 ko' },
+      { label: { fr: 'dépendances client', en: 'client deps' }, value: '3' }
+    ],
+    stack: ['TypeScript', 'React', 'Node', 'SQLite', 'WebSocket', 'WebRTC'],
+    links: [
+      { label: { fr: 'Dépôt', en: 'Repository' }, url: 'https://github.com/PatrickChoumi/kairus' }
+    ]
+  },
+  {
     slug: 'theory',
     name: 'Theory',
     year: '2026',

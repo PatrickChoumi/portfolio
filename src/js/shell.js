@@ -84,8 +84,13 @@ export function initShell(hooks) {
   const write = (lines) => { lines.forEach(push); scrollDown(); };
   const scrollDown = () => { el.screen.scrollTop = el.screen.scrollHeight; };
 
+  // Le « user@host: » est dans son propre span, deux-points compris : sur un
+  // écran étroit le CSS le retire et l'invite tombe à « ~/projects/kairus$ »,
+  // qui tient. C'est ce que fait n'importe quel PS1 raisonnable dans un
+  // terminal serré — on garde le chemin, qui informe, on lâche la machine,
+  // qui ne varie jamais. Le couper au milieu du span laisserait un « : » nu.
   function promptHtml() {
-    return `<span class="host">${escapeHtml(identity.handle)}@${escapeHtml(host)}</span>:<span>${escapeHtml(pathLabel())}</span>$&nbsp;`;
+    return `<span class="host">${escapeHtml(identity.handle)}@${escapeHtml(host)}:</span><span>${escapeHtml(pathLabel())}</span>$&nbsp;`;
   }
   const pathLabel = () => (cwd.length ? `~/${cwd.join('/')}` : '~');
 

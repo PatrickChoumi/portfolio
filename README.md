@@ -18,9 +18,9 @@ la met en pratique sous les yeux du visiteur :
 
 | Ce qui est affirmé | Ce qui le prouve, dans le site même |
 | --- | --- |
-| « Peu de dépendances » | zéro dépendance à l'exécution ; 32 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
+| « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 46 tests unitaires + 21 vérifications navigateur, en CI |
+| « Les garanties se prouvent » | 46 tests unitaires + 26 vérifications navigateur, en CI — dont le responsive et le contraste, mesurés plutôt qu'affirmés |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
 ## Démarrer
@@ -83,6 +83,8 @@ plutôt qu'en couleur. La description dit alors une intention, pas un résultat.
 
 > ⚠️ Si tu repars de ce dépôt : le contenu de `profile.js` est le parcours de
 > son auteur. Remplace-le par le tien avant de publier.
+
+![Projets](docs/captures/projets.png)
 
 ## Le terminal
 
@@ -161,7 +163,7 @@ src/js/effects.js       révélation au défilement + easter egg
 src/styles/main.css     design system « éditeur »
 scripts/fetch-fonts.mjs auto-hébergement des polices
 tests/                  46 tests node:test — logique pure
-tests-e2e/browser.mjs   21 vérifications navigateur
+tests-e2e/browser.mjs   26 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
@@ -195,10 +197,39 @@ ligne, barre de statut en bas, terminal escamotable.
 
 ![Parcours](docs/captures/parcours.png)
 
-## Accessibilité
+## Responsive et accessibilité
 
-Lien d'évitement, navigation entièrement au clavier, `:focus-visible` visible
-partout, contrastes vérifiés dans les deux thèmes, sortie du terminal en
+Rien de tout cela n'est déclaratif : cinq vérifications du harnais parcourent
+les sept routes à huit largeurs — de 320 px, le plus petit téléphone encore en
+circulation, à 1920 px — et échouent si l'une des garanties suivantes cède.
+
+| Garantie | Comment elle est tenue |
+| --- | --- |
+| Aucun défilement horizontal | mesuré sur chaque route à chaque largeur |
+| Cibles tactiles ≥ 24 px | WCAG 2.2, critère 2.5.8 (AA), sur tout ce qui est cliquable |
+| Contraste AA | 4,5:1 (3:1 pour le grand texte), dans les **deux** thèmes, en composant les fonds semi-transparents |
+| Le terminal utilisable au doigt | on ouvre, on tape `cd`, on vérifie que ça répond — sur 320 px |
+| Barre latérale escamotée hors du clavier | fermée, elle sort aussi du parcours de tabulation |
+
+Trois défauts réels ont été trouvés de cette façon, et corrigés :
+
+- **Le champ de saisie du terminal tombait à zéro pixel de large.** L'invite
+  `patrickchoumi@portfolio:~/projects/kairus$` fait 335 px et ne rétrécit pas :
+  sur un téléphone il ne restait plus rien pour taper. La rangée passe
+  désormais à la ligne, le champ garde un plancher de 12 caractères, et
+  au-dessous de 520 px l'invite abandonne `user@host` pour ne garder que le
+  chemin — l'arbitrage de n'importe quel `PS1` dans un terminal serré.
+- **La barre latérale escamotée restait tabulable.** Hors de l'écran par un
+  `translateX`, elle laissait traverser six liens invisibles avant le contenu,
+  et un lecteur d'écran les annonçait. Elle passe en `visibility: hidden`,
+  qui se transitionne — l'animation d'ouverture est conservée.
+- **`--text-tertiary` mentait sur son propre contraste.** Le token annonçait
+  « ≥ 4,5:1 sur `--bg` », ce qui était vrai — mais il servait surtout sur
+  `--surface-2`, où il tombait à 4,15:1. Recalé sur le pire cas.
+
+Par ailleurs : lien d'évitement, navigation entièrement au clavier,
+`:focus-visible` visible partout, un seul `h1` par section et aucun saut de
+niveau, `aria-current="page"` sur l'entrée courante, sortie du terminal en
 `role="log"` / `aria-live="polite"`, animations coupées sur demande du
 système.
 

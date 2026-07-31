@@ -235,6 +235,159 @@ async function main() {
     assert(summary.trim().length > 20, 'parcours vide après changement de langue');
   });
 
+  // ─── Responsive ─────────────────────────────────────────────────────
+  // Ce qui suit ne se voit pas en redimensionnant la fenêtre à la main : on
+  // parcourt toutes les routes à huit largeurs, du plus petit téléphone
+  // encore en circulation au grand écran. Trois de ces vérifications ont
+  // attrapé de vrais défauts, dont un qui rendait le terminal inutilisable
+  // sur un téléphone — il faut donc qu'elles restent.
+  const VIEWPORTS = [[320, 568], [360, 640], [390, 844], [414, 896], [768, 1024], [1024, 768], [1280, 800], [1920, 1080]];
+  const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/kairus', '/stack', '/contact'];
+
+  await check('aucune page ne défile horizontalement, à aucune largeur', async () => {
+    const bad = [];
+    for (const [w, h] of VIEWPORTS) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+      const p = await ctx.newPage();
+      await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
+      for (const route of ROUTES) {
+        await p.goto(base + route, { waitUntil: 'networkidle' });
+        await p.waitForTimeout(180);
+        const over = await p.evaluate(() =>
+          document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        if (over > 1) bad.push(`${route} @${w} déborde de ${over}px`);
+      }
+      await ctx.close();
+    }
+    assert(bad.length === 0, bad.slice(0, 5).join(' | '));
+  });
+
+  await check('les cibles tactiles font au moins 24 px (WCAG 2.2, 2.5.8)', async () => {
+    const bad = [];
+    for (const [w, h] of VIEWPORTS.filter(([w]) => w <= 768)) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+      const p = await ctx.newPage();
+      await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
+      for (const route of ROUTES) {
+        await p.goto(base + route, { waitUntil: 'networkidle' });
+        await p.waitForTimeout(180);
+        const small = await p.evaluate(() => {
+          const out = [];
+          for (const el of document.querySelectorAll('a, button, input, [role="button"], [role="tab"]')) {
+            const cs = getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 && r.height === 0) continue;
+            if (r.width < 24 || r.height < 24) out.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ')[0]} ${Math.round(r.width)}×${Math.round(r.height)}`);
+          }
+          return [...new Set(out)];
+        });
+        for (const s of small) bad.push(`${route} @${w} : ${s}`);
+      }
+      await ctx.close();
+    }
+    assert(bad.length === 0, [...new Set(bad)].slice(0, 5).join(' | '));
+  });
+
+  await check('le terminal reste utilisable sur un téléphone de 320 px', async () => {
+    // Le défaut d'origine : l'invite `patrickchoumi@portfolio:~/projects/kairus$`
+    // ne rétrécit pas, et le champ de saisie tombait à ZÉRO pixel de large.
+    // On ne pouvait plus taper une seule commande depuis un mobile.
+    const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true });
+    const p = await ctx.newPage();
+    await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
+    await p.goto(base, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(300);
+    await p.tap('#status-term');
+    await p.waitForTimeout(400);
+    assert(await p.isVisible('#term.is-open'), 'terminal non ouvert');
+
+    // Une fois dans le dossier au nom le plus long, le champ doit tenir.
+    await p.fill('#term-input', 'cd projects/kairus');
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(300);
+    await p.fill('#term-input', 'ls');
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(300);
+    assert((await p.textContent('#term-screen')).includes('README.md'), 'le shell ne répond pas');
+
+    const box = await p.locator('#term-input').boundingBox();
+    assert(box && box.width >= 60, `champ de saisie réduit à ${Math.round(box?.width ?? 0)}px`);
+    await ctx.close();
+  });
+
+  await check('la barre latérale escamotée sort du parcours clavier', async () => {
+    // Hors de l'écran mais toujours tabulable, elle fait traverser six liens
+    // invisibles avant le contenu, et un lecteur d'écran les annonce.
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const p = await ctx.newPage();
+    await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
+    await p.goto(base, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(300);
+    assert(!(await p.isVisible('.sidebar')), 'la barre latérale fermée reste exposée');
+    // Ouverte, elle redevient atteignable — sinon le remède tuerait le menu.
+    await p.click('#nav-toggle');
+    await p.waitForTimeout(400);
+    assert(await p.isVisible('.sidebar .tree-item'), 'la barre latérale ouverte n’est pas atteignable');
+    await ctx.close();
+  });
+
+  await check('tous les textes tiennent le contraste AA, dans les deux thèmes', async () => {
+    const bad = [];
+    for (const theme of ['light', 'dark']) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: theme });
+      const p = await ctx.newPage();
+      await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
+      for (const route of ROUTES) {
+        await p.goto(base + route, { waitUntil: 'networkidle' });
+        await p.waitForTimeout(180);
+        const low = await p.evaluate(() => {
+          const lum = (c) => {
+            const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          };
+          // Un fond semi-transparent doit être COMPOSÉ sur ce qu'il y a
+          // derrière : lu comme opaque, le lavis bleu à 9 % de la ligne active
+          // se mesure comme un bleu plein, et invente un défaut inexistant.
+          const bgOf = (el) => {
+            const stack = [];
+            for (let n = el; n; n = n.parentElement) {
+              const v = (getComputedStyle(n).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+              if (v.length < 3) continue;
+              const a = v.length > 3 ? v[3] : 1;
+              if (a === 0) continue;
+              stack.push([v.slice(0, 3), a]);
+              if (a === 1) break;
+            }
+            stack.push([[255, 255, 255], 1]);
+            let out = stack[stack.length - 1][0];
+            for (let i = stack.length - 2; i >= 0; i--) {
+              const [c, a] = stack[i];
+              out = out.map((x, k) => c[k] * a + x * (1 - a));
+            }
+            return out;
+          };
+          const out = [];
+          for (const el of document.querySelectorAll('p, span, a, button, h1, h2, h3, li, div, label, input')) {
+            if (!el.textContent?.trim() || el.children.length) continue;
+            const cs = getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden' || !el.getClientRects().length) continue;
+            const fg = (cs.color.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+            const [l1, l2] = [lum(fg), lum(bgOf(el))].sort((a, b) => b - a);
+            const ratio = (l1 + 0.05) / (l2 + 0.05);
+            const size = parseFloat(cs.fontSize);
+            const need = (size >= 24 || (size >= 18.66 && Number(cs.fontWeight) >= 700)) ? 3 : 4.5;
+            if (ratio < need) out.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ')[0]} ${ratio.toFixed(2)}:1 < ${need}`);
+          }
+          return [...new Set(out)];
+        });
+        for (const l of low) bad.push(`${theme} ${route} : ${l}`);
+      }
+      await ctx.close();
+    }
+    assert(bad.length === 0, [...new Set(bad)].slice(0, 5).join(' | '));
+  });
+
   // ─── La séquence de démarrage ───────────────────────────────────────
   // Elle a trois garde-fous, et chacun peut se casser sans rien casser
   // d'autre — donc chacun se vérifie ici. Un contexte neuf par cas : le
