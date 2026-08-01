@@ -20,7 +20,7 @@ la met en pratique sous les yeux du visiteur :
 | --- | --- |
 | « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 46 tests unitaires + 30 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
+| « Les garanties se prouvent » | 46 tests unitaires + 31 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
 ## Démarrer
@@ -167,7 +167,7 @@ src/styles/main.css     design system « éditeur »
 scripts/fetch-fonts.mjs auto-hébergement des polices
 scripts/build-sitemap.mjs sitemap.xml + robots.txt, dérivés des routes
 tests/                  46 tests node:test — logique pure
-tests-e2e/browser.mjs   30 vérifications navigateur
+tests-e2e/browser.mjs   31 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
@@ -207,13 +207,32 @@ Le site est déclaré dans la Google Search Console sur
 `https://patrickchoumi.vercel.app`. Trois choses le rendent indexable, et
 chacune est vérifiée par le harnais.
 
-**La preuve de propriété.** `public/google7589f0063f878c18.html` est copié tel
-quel dans `dist/` par Vite. Le piège est le repli SPA : tout chemin inconnu
-renvoie `index.html`, et un fichier de vérification qui y passe fait lire à
-Google la page d'accueil au lieu du jeton — la validation échoue sans dire
-pourquoi. Le `vercel.json` exclut donc de la réécriture tout chemin portant
-une extension, et un test refait la vérification à chaque build. **Ne supprime
-pas ce fichier après validation** : Google le revérifie périodiquement.
+> Rien de tout cela n'agit tant que la branche déployée ne porte pas ces
+> commits : la Search Console lit le site **en ligne**, pas le dépôt.
+
+**La preuve de propriété.** Elle est posée par la **balise meta**, dans le
+`<head>` statique d'`index.html` — c'est la méthode la plus simple, et la plus
+robuste : rien à servir, rien qu'un repli de routage puisse intercepter.
+
+```html
+<meta name="google-site-verification" content="…" />
+```
+
+Elle doit survivre à deux choses, et un test le vérifie : au rendu (`seo.js`
+réécrit la tête du document à chaque route — le jour où quelqu'un lui fera
+*reconstruire* la tête au lieu de la modifier, la balise disparaîtrait et
+Google dévaliderait le site en silence) et à la bascule de langue, qui
+reconstruit page, arbre et invite.
+
+La preuve par fichier (`public/google7589f0063f878c18.html`) est conservée en
+second témoin — Google accepte plusieurs méthodes, et deux valent mieux
+qu'une. Elle a son propre piège, que le `vercel.json` désamorce : tout chemin
+inconnu retombe sur `index.html`, et un fichier de vérification qui passe par
+ce repli fait lire à Google la page d'accueil au lieu du jeton. La réécriture
+exclut donc tout chemin portant une extension.
+
+**Ne supprime ni l'un ni l'autre après validation** : Google les revérifie
+périodiquement, et les retirer fait perdre la propriété du site.
 
 **Une tête de document par route.** Le site a onze URL mais un seul fichier
 HTML : sans rien, les onze partagent le même `<title>` et la même description,

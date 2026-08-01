@@ -240,7 +240,30 @@ async function main() {
   const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/kairus', '/stack', '/contact'];
 
   // ─── Indexation ─────────────────────────────────────────────────────
-  await check('la preuve de propriété Google est servie telle quelle', async () => {
+  await check('la preuve de propriété Google survit à la navigation', async () => {
+    // Le jeton est dans le HTML statique, mais seo.js réécrit la tête du
+    // document à chaque route. Le jour où quelqu'un lui fera reconstruire la
+    // tête au lieu de la modifier, la balise disparaîtra — et Google
+    // dévalidera le site en silence, plusieurs semaines plus tard.
+    const TOKEN = 'C55YMvsbs9BQuVu_PQoWqBbkdIZBaodr2mIMGeuggWI';
+    const html = await (await page.request.get(base)).text();
+    assert(html.includes(TOKEN), 'jeton absent du HTML servi');
+
+    for (const route of ['/', '/projets/kairus', '/contact']) {
+      await page.goto(base + route, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(200);
+      const live = await page.getAttribute('meta[name="google-site-verification"]', 'content');
+      assert(live === TOKEN, `${route} : jeton perdu après rendu (${live})`);
+    }
+    // La bascule de langue reconstruit page, arbre et invite : elle non plus
+    // ne doit pas emporter la balise.
+    await page.click('#btn-lang');
+    await page.waitForTimeout(400);
+    assert(await page.getAttribute('meta[name="google-site-verification"]', 'content') === TOKEN,
+      'jeton perdu à la bascule de langue');
+  });
+
+  await check('la preuve de propriété par fichier est servie telle quelle', async () => {
     // Le piège du repli SPA : tout chemin inconnu renvoie index.html. Si le
     // fichier de vérification y passait, Google lirait la page d'accueil au
     // lieu du jeton, et la validation échouerait sans dire pourquoi.
