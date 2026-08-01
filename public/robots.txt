@@ -1,2 +1,5 @@
+# Tout est public, et tout mérite d’être lu.
 User-agent: *
 Allow: /
+
+Sitemap: https://patrickchoumi.vercel.app/sitemap.xml

@@ -235,15 +235,89 @@ async function main() {
     assert(summary.trim().length > 20, 'parcours vide après changement de langue');
   });
 
+  // Les sept routes réelles, et les largeurs auxquelles on les éprouve.
+  const VIEWPORTS = [[320, 568], [360, 640], [390, 844], [414, 896], [768, 1024], [1024, 768], [1280, 800], [1920, 1080]];
+  const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/kairus', '/stack', '/contact'];
+
+  // ─── Indexation ─────────────────────────────────────────────────────
+  await check('la preuve de propriété Google est servie telle quelle', async () => {
+    // Le piège du repli SPA : tout chemin inconnu renvoie index.html. Si le
+    // fichier de vérification y passait, Google lirait la page d'accueil au
+    // lieu du jeton, et la validation échouerait sans dire pourquoi.
+    for (const [file, needle] of [
+      ['/google7589f0063f878c18.html', 'google-site-verification:'],
+      ['/robots.txt', 'Sitemap:'],
+      ['/sitemap.xml', '<urlset']
+    ]) {
+      const res = await page.request.get(base + file);
+      assert(res.ok(), `${file} : HTTP ${res.status()}`);
+      const body = await res.text();
+      assert(body.includes(needle), `${file} : contenu remplacé par le repli SPA`);
+      assert(!body.includes('<!DOCTYPE html>\n<html'), `${file} : c’est index.html qui est servi`);
+    }
+  });
+
+  await check('le sitemap liste toutes les routes, et rien de mort', async () => {
+    const xml = await (await page.request.get(`${base}/sitemap.xml`)).text();
+    const paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+      .map((m) => new URL(m[1]).pathname);
+    for (const expected of ROUTES) {
+      assert(paths.includes(expected), `${expected} absent du sitemap`);
+    }
+    // Une URL du sitemap qui ne mène nulle part coûte plus qu'elle ne rapporte.
+    for (const p of paths) {
+      const r = await page.goto(base + p, { waitUntil: 'networkidle' });
+      assert(r.ok(), `${p} listé au sitemap répond ${r.status()}`);
+      await page.waitForTimeout(120);
+      assert(await page.isVisible('.section.is-active'), `${p} n’affiche aucune section`);
+    }
+  });
+
+  await check('chaque route a son titre, sa description et son canonique', async () => {
+    const seen = new Map();
+    for (const route of ROUTES) {
+      await page.goto(base + route, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(200);
+      const head = await page.evaluate(() => ({
+        title: document.title,
+        desc: document.querySelector('meta[name="description"]')?.content || '',
+        canonical: document.querySelector('link[rel="canonical"]')?.href || '',
+        ogUrl: document.querySelector('meta[property="og:url"]')?.content || ''
+      }));
+      assert(head.title.length > 10, `${route} : titre vide`);
+      assert(head.desc.length > 40, `${route} : description trop courte`);
+      // Google tronque autour de 160 caractères ; au-delà, la phrase est
+      // coupée en plein milieu dans les résultats.
+      assert(head.desc.length <= 160, `${route} : description de ${head.desc.length} caractères`);
+      assert(new URL(head.canonical).pathname === route, `${route} : canonique ${head.canonical}`);
+      assert(head.ogUrl === head.canonical, `${route} : og:url ≠ canonique`);
+
+      // Deux pages qui partagent un titre sont, pour un moteur, la même page.
+      const clash = seen.get(head.title);
+      assert(!clash, `${route} porte le même titre que ${clash}`);
+      seen.set(head.title, route);
+      const dclash = [...seen.entries()].find(([, r]) => r !== route && r.desc === head.desc);
+      assert(!dclash, `${route} : description dupliquée`);
+    }
+  });
+
+  await check('le titre suit aussi la langue', async () => {
+    await page.goto(`${base}/parcours`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(250);
+    const t1 = await page.title();
+    await page.click('#btn-lang');
+    await page.waitForTimeout(400);
+    const t2 = await page.title();
+    assert(t1 !== t2, `titre inchangé après la bascule de langue (${t1})`);
+    assert((await page.getAttribute('html', 'lang')) !== null, 'html lang absent');
+  });
+
   // ─── Responsive ─────────────────────────────────────────────────────
   // Ce qui suit ne se voit pas en redimensionnant la fenêtre à la main : on
   // parcourt toutes les routes à huit largeurs, du plus petit téléphone
   // encore en circulation au grand écran. Trois de ces vérifications ont
   // attrapé de vrais défauts, dont un qui rendait le terminal inutilisable
   // sur un téléphone — il faut donc qu'elles restent.
-  const VIEWPORTS = [[320, 568], [360, 640], [390, 844], [414, 896], [768, 1024], [1024, 768], [1280, 800], [1920, 1080]];
-  const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/kairus', '/stack', '/contact'];
-
   await check('aucune page ne défile horizontalement, à aucune largeur', async () => {
     const bad = [];
     for (const [w, h] of VIEWPORTS) {

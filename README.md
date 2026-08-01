@@ -20,7 +20,7 @@ la met en pratique sous les yeux du visiteur :
 | --- | --- |
 | « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 46 tests unitaires + 26 vérifications navigateur, en CI — dont le responsive et le contraste, mesurés plutôt qu'affirmés |
+| « Les garanties se prouvent » | 46 tests unitaires + 30 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
 ## Démarrer
@@ -39,6 +39,8 @@ npm run dev          # http://localhost:5173
 | `npm run test:e2e` | build + harnais navigateur (Chromium) |
 | `npm run check` | tout : tests, build, harnais |
 | `npm run fonts` | re-télécharge et auto-héberge les polices |
+
+`npm run build` régénère `sitemap.xml` et `robots.txt` avant de compiler.
 
 ## Personnaliser : un seul fichier
 
@@ -159,11 +161,13 @@ src/js/router.js        routes réelles (History API), analyse pure
 src/js/i18n.js          FR/EN, sans rechargement
 src/js/repl.js          le REPL animé de l'accueil
 src/js/boot.js          séquence de démarrage (une fois par session)
+src/js/seo.js           titre, description et canonique par route
 src/js/effects.js       révélation au défilement + easter egg
 src/styles/main.css     design system « éditeur »
 scripts/fetch-fonts.mjs auto-hébergement des polices
+scripts/build-sitemap.mjs sitemap.xml + robots.txt, dérivés des routes
 tests/                  46 tests node:test — logique pure
-tests-e2e/browser.mjs   26 vérifications navigateur
+tests-e2e/browser.mjs   30 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
@@ -196,6 +200,44 @@ ligne, barre de statut en bas, terminal escamotable.
   démarrage, la révélation au défilement et l'easter egg.
 
 ![Parcours](docs/captures/parcours.png)
+
+## Indexation
+
+Le site est déclaré dans la Google Search Console sur
+`https://patrickchoumi.vercel.app`. Trois choses le rendent indexable, et
+chacune est vérifiée par le harnais.
+
+**La preuve de propriété.** `public/google7589f0063f878c18.html` est copié tel
+quel dans `dist/` par Vite. Le piège est le repli SPA : tout chemin inconnu
+renvoie `index.html`, et un fichier de vérification qui y passe fait lire à
+Google la page d'accueil au lieu du jeton — la validation échoue sans dire
+pourquoi. Le `vercel.json` exclut donc de la réécriture tout chemin portant
+une extension, et un test refait la vérification à chaque build. **Ne supprime
+pas ce fichier après validation** : Google le revérifie périodiquement.
+
+**Une tête de document par route.** Le site a onze URL mais un seul fichier
+HTML : sans rien, les onze partagent le même `<title>` et la même description,
+et ne sont qu'une seule page pour un moteur. `src/js/seo.js` est branché sur
+`navigate()` — le point de passage unique — et pose à chaque route son titre,
+sa description (coupée proprement avant les 160 caractères que Google
+affiche), son canonique et ses balises Open Graph. Le canonique est déduit de
+`location.origin`, pas d'un domaine écrit en dur : il reste juste en
+préproduction, et il n'y a rien à reconfigurer le jour d'un nom de domaine
+personnel. Un test échoue si deux routes partagent un titre.
+
+**Un sitemap calculé.** `scripts/build-sitemap.mjs` dérive `sitemap.xml` et la
+ligne `Sitemap:` de `robots.txt` du routeur et de `profile.js`, à chaque
+build : ajouter un projet ajoute son URL. Une liste tenue à la main dérive à
+la première modification et finit par pointer vers des 404 — le harnais visite
+d'ailleurs chaque URL du sitemap pour vérifier qu'elle répond.
+
+Il reste à faire, une fois en ligne : *Sitemaps* → soumettre
+`https://patrickchoumi.vercel.app/sitemap.xml`, puis *Inspection de l'URL* →
+**Demander une indexation** sur l'accueil. Compter quelques jours.
+
+Une limite assumée : la langue suit celle du navigateur sans changer l'URL. Il
+n'y a donc pas de `hreflang` à déclarer — une seule adresse sert les deux
+langues, et Google indexera celle que son robot déclenche.
 
 ## Responsive et accessibilité
 

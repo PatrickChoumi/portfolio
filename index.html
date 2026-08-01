@@ -9,9 +9,18 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d1013'/><text x='50' y='70' font-family='monospace' font-size='58' font-weight='700' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
 
+  <!-- Ces valeurs sont celles de l'accueil, et le point de départ de chaque
+       page : src/js/seo.js les remplace selon la route, avant que le
+       navigateur — ou l'indexeur de Google, qui exécute le script — ne lise
+       la tête du document. Sans lui, les onze URL du site partageraient un
+       seul titre et une seule description, et ne seraient qu'une page. -->
+  <link rel="canonical" href="https://patrickchoumi.vercel.app/" />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="patrickchoumi" />
   <meta property="og:title" content="Patrick Choumi — Élève ingénieur, génie informatique" />
   <meta property="og:description" content="Un portfolio qui est aussi un système de fichiers. Lisez la page, ou explorez-la au terminal." />
+  <meta property="og:url" content="https://patrickchoumi.vercel.app/" />
+  <meta name="twitter:card" content="summary" />
 
   <!-- Polices auto-hébergées (voir scripts/fetch-fonts.mjs) : aucune requête
        vers un tiers au chargement. Le portfolio affirme ne rien envoyer

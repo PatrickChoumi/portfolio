@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "comment": "Le site a des URL reelles (/projets/kairus) mais un seul fichier HTML : tout chemin sans extension retombe sur index.html, sinon Vercel repond 404 et Google n'indexe rien. La negation exclut les fichiers servis tels quels — la preuve de propriete Google, sitemap.xml, robots.txt, les polices et les assets. Sans elle, /google7589f0063f878c18.html renverrait la page d'accueil et la validation echouerait.",
+      "source": "/((?!.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

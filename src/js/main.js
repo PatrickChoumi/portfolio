@@ -17,6 +17,7 @@ import { initShell } from './shell.js';
 import { initPalette } from './palette.js';
 import { initReveal, matrixRain } from './effects.js';
 import { runBoot } from './boot.js';
+import { applyHead } from './seo.js';
 import { pathForRoute } from '../data/fs.js';
 
 // L'arborescence dépend de la langue : on la reconstruit à chaque bascule
@@ -42,6 +43,10 @@ function navigate(next, opts = {}) {
 
   showSection(route);
   renderRoute(route);
+  // Le titre, la description et le canonique suivent la route. Onze URL qui
+  // partagent une seule tête de document, ce sont onze fois la même page aux
+  // yeux d'un moteur de recherche.
+  applyHead(route);
   if (!opts.fromHistory) router?.set(route);
 
   // Le terminal suit la page (et réciproquement, via la commande `cd`).
@@ -142,6 +147,9 @@ function wireEvents() {
     initRepl();
     initReveal();
     shell?.refresh();
+    // La tête aussi : sans ça, le titre et la description restent dans la
+    // langue précédente, et `<html lang>` cesse de dire la vérité.
+    applyHead(route);
     requestAnimationFrame(paintGutters);
   });
 
