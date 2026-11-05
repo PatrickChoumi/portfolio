@@ -34,8 +34,11 @@ export function initShell(hooks) {
     prompt: document.getElementById('term-prompt'),
     close: document.getElementById('term-close'),
     hint: document.getElementById('term-hint'),
-    statusPath: document.getElementById('status-path'),
-    statusMode: document.getElementById('status-mode')
+    // Le cartouche remplace la barre de statut : le mode y occupe sa
+    // propre case. Le chemin, lui, n'est plus écrit ici — c'est la case
+    // « planche » que renderCartouche tient, et elle dit déjà la même
+    // chose puisque `cd` déplace la page.
+    statusMode: document.getElementById('cart-mode')
   };
   if (!el.term) return null;
 
@@ -96,7 +99,6 @@ export function initShell(hooks) {
 
   function refreshPrompt() {
     el.prompt.innerHTML = promptHtml();
-    if (el.statusPath) el.statusPath.textContent = pathLabel();
   }
 
   // ─── Exécution ──────────────────────────────────────────────────────
@@ -277,7 +279,7 @@ export function initShell(hooks) {
   function refreshChrome() {
     refreshPrompt();
     if (el.hint) el.hint.textContent = t('term.hint');
-    el.statusMode.textContent = open ? 'SHELL' : (getLang() === 'en' ? 'READ' : 'LIRE');
+    if (el.statusMode) el.statusMode.textContent = open ? 'SHELL' : (getLang() === 'en' ? 'READ' : 'LIRE');
   }
   refreshChrome();
 

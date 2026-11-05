@@ -30,7 +30,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { pick, slugify } from './lang.js';
-import { identity, about, experience, projects, stack, principles, contact, host } from './profile.js';
+import { identity, about, experience, projects, stack, principles, contact, host, layers } from './profile.js';
 
 // ─── Fabriques de nœuds ───────────────────────────────────────────────
 const file = (name, content, route = null, extra = {}) => ({ type: 'file', name, content, route, ...extra });
@@ -130,10 +130,13 @@ export function shortHash(str) {
 }
 
 function projectReadme(p, lang) {
+  // La couche est la première chose dite d'un projet, ici comme sur la page.
+  const layer = layers.find((l) => l.slug === p.layer);
+  const cote = layer ? `${String(layer.depth).padStart(2, '0')} ${pick(layer.name, lang)}` : '';
   return [
     `# ${p.name}`,
     `${pick(p.tagline, lang)}`,
-    `${p.year} · ${pick(STATUS_LABEL[p.status], lang)}`,
+    `${p.year} · ${pick(STATUS_LABEL[p.status], lang)}${cote ? ` · ${cote}` : ''}`,
     '',
     pick(p.summary, lang),
     '',

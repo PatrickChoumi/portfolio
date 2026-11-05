@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { identity, hero, about, experience, projects, stack, principles, contact } from '../src/data/profile.js';
+import { identity, hero, about, experience, projects, stack, principles, contact, layers } from '../src/data/profile.js';
 import { pick, slugify } from '../src/data/lang.js';
 
 const LANGS = ['fr', 'en'];
@@ -112,6 +112,32 @@ test('les projets sont uniques, datés et bilingues', () => {
     }
     // Une accroche qui déborde casse la mise en page des cartes.
     for (const lang of LANGS) assert.ok(pick(p.tagline, lang).length <= 90, `${p.slug} : accroche trop longue (${lang})`);
+  }
+});
+
+test('chaque projet est posé sur une couche réelle, et aucune couche n’est vide', () => {
+  // La coupe est l'armature du site. Un projet dont la couche n'existe pas
+  // disparaît de l'accueil sans erreur : il serait simplement absent, et
+  // personne ne le remarquerait avant longtemps.
+  const slugs = layers.map((l) => l.slug);
+  assert.equal(new Set(slugs).size, slugs.length, 'slugs de couches dupliqués');
+
+  const depths = layers.map((l) => l.depth);
+  assert.equal(new Set(depths).size, depths.length, 'deux couches à la même profondeur');
+  for (const l of layers) {
+    assert.ok(Number.isInteger(l.depth) && l.depth >= 0, `${l.slug} : profondeur invalide`);
+    assertBilingual(l.name, `layers.${l.slug}.name`);
+    assertBilingual(l.note, `layers.${l.slug}.note`);
+  }
+
+  for (const p of projects) {
+    assert.ok(slugs.includes(p.layer), `${p.slug} : couche « ${p.layer} » inconnue`);
+  }
+
+  // Une couche sans projet laisse une strate vide dans la coupe — soit on
+  // la retire, soit on y pose quelque chose.
+  for (const l of layers) {
+    assert.ok(projects.some((p) => p.layer === l.slug), `couche « ${l.slug} » sans aucun projet`);
   }
 });
 

@@ -11,7 +11,7 @@
 import { initTheme, toggleTheme, setTheme } from './theme.js';
 import { initI18n, setLang, toggleLang, getLang, t, onLangChange } from './i18n.js';
 import { initRouter } from './router.js';
-import { renderAll, renderRoute, paintGutters, currentFs } from './render.js';
+import { renderAll, renderRoute, currentFs } from './render.js';
 import { initRepl } from './repl.js';
 import { initShell } from './shell.js';
 import { initPalette } from './palette.js';
@@ -63,11 +63,10 @@ function navigate(next, opts = {}) {
   }
 
   initReveal();
-  requestAnimationFrame(paintGutters);
 }
 
 // ─── Barre latérale mobile ────────────────────────────────────────────
-const sidebar = () => document.getElementById('sidebar');
+const sidebar = () => document.getElementById('rail');
 const scrim = () => document.getElementById('nav-scrim');
 
 function openSidebar() {
@@ -116,7 +115,6 @@ function boot() {
   runBoot({ deepLink: startRoute.section !== 'home' });
 
   wireEvents();
-  requestAnimationFrame(paintGutters);
 }
 
 // ─── Événements ───────────────────────────────────────────────────────
@@ -132,7 +130,7 @@ function wireEvents() {
 
   document.getElementById('btn-lang')?.addEventListener('click', () => toggleLang());
   document.getElementById('btn-search')?.addEventListener('click', () => palette?.open());
-  document.getElementById('status-term')?.addEventListener('click', () => shell?.toggle());
+  document.getElementById('cart-term')?.addEventListener('click', () => shell?.toggle());
   document.getElementById('cta-term')?.addEventListener('click', () => shell?.open());
   document.getElementById('nav-toggle')?.addEventListener('click', () => {
     sidebar().classList.contains('is-open') ? closeSidebar() : openSidebar();
@@ -150,10 +148,7 @@ function wireEvents() {
     // La tête aussi : sans ça, le titre et la description restent dans la
     // langue précédente, et `<html lang>` cesse de dire la vérité.
     applyHead(route);
-    requestAnimationFrame(paintGutters);
   });
-
-  window.addEventListener('resize', debounce(paintGutters, 150));
 
   document.addEventListener('keydown', (e) => {
     const typing = e.target.matches('input, textarea, [contenteditable]');
@@ -179,10 +174,6 @@ function wireEvents() {
   });
 }
 
-function debounce(fn, ms) {
-  let id;
-  return (...args) => { clearTimeout(id); id = setTimeout(() => fn(...args), ms); };
-}
 
 // Le hint de la barre de statut dépend de la plateforme : afficher « ⌘K »
 // à quelqu'un sous Linux est une petite trahison.
@@ -193,12 +184,9 @@ function platformHint() {
 
 document.addEventListener('DOMContentLoaded', () => {
   boot();
-  const hint = document.getElementById('status-hint');
+  const hint = document.getElementById('cart-hint');
   if (hint) {
     hint.textContent = platformHint();
     onLangChange(() => { hint.textContent = platformHint(); });
   }
-  // Les polices arrivent après le premier rendu : la hauteur du texte change
-  // au `load`, donc la gouttière doit être repeinte à ce moment-là.
-  window.addEventListener('load', () => requestAnimationFrame(paintGutters));
 });

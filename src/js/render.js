@@ -1,14 +1,20 @@
-// Rendu de la page à partir des données.
+// ═══════════════════════════════════════════════════════════════════════
+//  LE RENDU DE LA PLANCHE
 //
-// Rien de ce qui suit n'est écrit en dur dans index.html : le HTML n'est
-// qu'une charpente de conteneurs vides. Changer profile.js change la page,
-// le terminal, la palette et le CV imprimé d'un coup.
+//  Rien de ce qui suit n'est écrit en dur dans index.html : le HTML n'est
+//  qu'une charpente de conteneurs vides. Changer profile.js change la
+//  coupe, les fiches, le terminal, la palette et le CV imprimé d'un coup.
+//
+//  Une règle traverse ce fichier : TOUT CE QUI EST LISTÉ EST TRIÉ PAR
+//  PROFONDEUR. La coupe de l'accueil, le rail, la liste des projets — même
+//  ordre, même groupement. Une liste triée par date raconterait une autre
+//  histoire que l'accueil, et le visiteur paierait la différence.
+// ═══════════════════════════════════════════════════════════════════════
 
-import { identity, hero, about, experience, projects, stack, principles, contact } from '../data/profile.js';
+import { identity, hero, about, experience, projects, stack, principles, contact, layers } from '../data/profile.js';
 import { buildFs, shortHash } from '../data/fs.js';
 import { t, tx, getLang } from './i18n.js';
 
-// ─── Utilitaires ──────────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 
 export function esc(str) {
@@ -26,9 +32,6 @@ export function inline(str) {
     .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
-// « planned » n'est pas un statut de confort : un projet qui n'a pas commencé
-// n'est ni en ligne ni en cours, et l'annoncer autrement serait un mensonge
-// que la page afficherait en gras.
 const STATUS_LABEL = {
   live: { fr: 'en ligne', en: 'live' },
   wip: { fr: 'en cours', en: 'in progress' },
@@ -38,57 +41,85 @@ const STATUS_LABEL = {
 
 const periodOf = (job) => `${job.start} → ${job.end || (getLang() === 'en' ? 'now' : 'aujourd’hui')}`;
 
-// ─── Barre latérale : l'arborescence ──────────────────────────────────
-// L'explorateur reprend la structure du système de fichiers virtuel, pour
-// que la page et le shell parlent exactement du même objet.
-const TREE_ITEMS = [
-  { icon: '◆', label: 'README.md', section: 'home', depth: 0 },
-  { icon: '·', label: 'about.md', section: 'about', depth: 0 },
-  { icon: '▸', label: 'experience/', section: 'experience', depth: 0, count: () => experience.length },
-  { icon: '▸', label: 'projects/', section: 'projects', depth: 0, count: () => projects.length },
-  { icon: '▸', label: 'stack/', section: 'stack', depth: 0, count: () => stack.length },
-  { icon: '·', label: 'contact.md', section: 'contact', depth: 0 }
-];
+// La cote d'une couche, sur deux chiffres : « 00 », « 03 ». Tabulaire, donc
+// alignée d'une ligne à l'autre — c'est une graduation, pas un numéro.
+const cote = (n) => String(n).padStart(2, '0');
 
-export function renderTree(route) {
-  const el = $('#tree');
-  if (!el) return;
-  const rows = TREE_ITEMS.map((item) => {
-    const active = route.section === item.section;
-    const count = item.count ? `<span class="tree-count">${item.count()}</span>` : '';
-    return `<button class="tree-item${active ? ' is-active' : ''}" data-nav="${item.section}" data-depth="${item.depth}"${active ? ' aria-current="page"' : ''}>
-      <span class="tree-icon" aria-hidden="true">${item.icon}</span><span>${esc(item.label)}</span>${count}
-    </button>`;
-  }).join('');
-
-  // Sous-niveau : les projets se déplient quand on est dans la section.
-  const subProjects = route.section === 'projects'
-    ? projects.map((p) => `<button class="tree-item${route.slug === p.slug ? ' is-active' : ''}" data-nav="projects" data-slug="${p.slug}" data-depth="1">
-        <span class="tree-icon" aria-hidden="true">·</span><span>${esc(p.slug)}/</span>
-      </button>`).join('')
-    : '';
-
-  el.innerHTML = `<p class="tree-label">${esc(t('tree.title'))}</p>` + rows +
-    (subProjects ? `<div id="tree-projects">${subProjects}</div>` : '');
-
-  // Les sous-projets doivent apparaître SOUS projects/ et non en fin de liste.
-  const sub = $('#tree-projects');
-  const parent = el.querySelector('.tree-item[data-nav="projects"]:not([data-slug])');
-  if (sub && parent) parent.after(sub);
+// Les couches, de la surface vers le fond, avec leurs projets. L'ordre vient
+// de `depth` et non de l'ordre de déclaration : déplacer une couche dans le
+// fichier de données ne doit pas retourner la coupe.
+export function strata() {
+  return [...layers]
+    .sort((a, b) => a.depth - b.depth)
+    .map((layer) => ({ ...layer, items: projects.filter((p) => p.layer === layer.slug) }));
 }
 
-// ─── Onglets de buffer ────────────────────────────────────────────────
-export function renderTabs(route) {
-  const el = $('#tabs');
+// La profondeur d'un projet, pour le cartouche et le rail.
+const depthOf = (slug) => layers.find((l) => l.slug === projects.find((p) => p.slug === slug)?.layer)?.depth ?? 0;
+
+// ─── Le rail de profondeur ────────────────────────────────────────────
+// Les sections de lecture d'abord, puis les couches cotées. Ce n'est plus
+// un explorateur de fichiers : c'est l'échelle de la coupe.
+const SECTIONS = [
+  { label: { fr: 'Accueil', en: 'Home' }, section: 'home' },
+  { label: { fr: 'À propos', en: 'About' }, section: 'about' },
+  { label: { fr: 'Parcours', en: 'Career' }, section: 'experience' },
+  { label: { fr: 'Projets', en: 'Projects' }, section: 'projects' },
+  { label: { fr: 'Stack', en: 'Stack' }, section: 'stack' },
+  { label: { fr: 'Contact', en: 'Contact' }, section: 'contact' }
+];
+
+function railItem({ depth, name, count, active, route }) {
+  const attrs = [
+    `data-nav="${esc(route.section)}"`,
+    route.slug ? `data-slug="${esc(route.slug)}"` : '',
+    active ? ' aria-current="page"' : ''
+  ].filter(Boolean).join(' ');
+  return `<button class="rail-item${active ? ' is-active' : ''}" ${attrs}>` +
+    `<span class="rail-depth" aria-hidden="true">${esc(depth)}</span>` +
+    `<span class="rail-name">${esc(name)}</span>` +
+    (count != null ? `<span class="rail-count">${count}</span>` : '') +
+    '</button>';
+}
+
+export function renderRail(route) {
+  const el = $('#rail-nav');
   if (!el) return;
-  const sections = [...document.querySelectorAll('main .section')];
-  el.innerHTML = sections.map((s) => {
-    const active = s.id === route.section;
-    return `<button class="buffer-tab${active ? ' is-active' : ''}" role="tab" aria-selected="${active}" data-nav="${s.id}">
-      <span class="buffer-tab-dot" aria-hidden="true"></span>${esc(s.dataset.file)}
-    </button>`;
-  }).join('');
-  el.querySelector('.buffer-tab.is-active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+  const sections = SECTIONS.map((s) => railItem({
+    depth: '··',
+    name: tx(s.label),
+    active: route.section === s.section && !route.slug,
+    route: { section: s.section }
+  })).join('');
+
+  // Les couches mènent à la liste des projets, ancrée sur leur groupe.
+  const couches = strata().map((layer) => railItem({
+    depth: cote(layer.depth),
+    name: tx(layer.name),
+    count: layer.items.length,
+    active: route.slug ? projects.find((p) => p.slug === route.slug)?.layer === layer.slug : false,
+    route: { section: 'projects' }
+  })).join('');
+
+  el.innerHTML =
+    `<div class="rail-group">${sections}</div>` +
+    `<div class="rail-group"><p class="rail-label label">${esc(t('rail.layers'))}</p>${couches}</div>`;
+}
+
+// ─── Le cartouche ─────────────────────────────────────────────────────
+// Le bandeau d'une planche : quelle feuille, à quelle profondeur, quelle
+// révision. La révision est l'année — un portfolio n'a pas d'indice de
+// modification, et en inventer un serait du décor.
+export function renderCartouche(route) {
+  const sheet = route.slug
+    ? `${route.section}/${route.slug}`
+    : (SECTIONS.find((s) => s.section === route.section) ? route.section : 'home');
+  const depth = route.slug ? cote(depthOf(route.slug)) : '··';
+  const setText = (id, v) => { const n = document.getElementById(id); if (n) n.textContent = v; };
+  setText('cart-sheet', sheet);
+  setText('cart-depth', depth);
+  setText('cart-rev', String(new Date().getFullYear()));
 }
 
 // ─── Accueil ──────────────────────────────────────────────────────────
@@ -103,22 +134,23 @@ function renderHome() {
   $('#hero-kicker').textContent = tx(hero.kicker);
   // Seule exception à l'échappement : le titre et la lede portent volontairement
   // du balisage (<br>, <em>, <span class="emphasis">). C'est de la mise en page
-  // définie dans notre propre fichier de données, jamais une saisie utilisateur —
-  // partout ailleurs, `esc()`/`inline()` échappent avant tout.
+  // définie dans notre propre fichier de données, jamais une saisie utilisateur.
   $('#hero-title').innerHTML = tx(hero.title);
   $('#hero-lede').innerHTML = tx(hero.lede);
 
   $('#hero-identity').innerHTML = [
     `<strong>${esc(identity.name)}</strong>`,
-    `<span class="sep">·</span>`,
+    '<span class="sep">·</span>',
     esc(tx(identity.role)),
-    `<span class="sep">·</span>`,
+    '<span class="sep">·</span>',
     esc(tx(identity.location))
   ].join(' ');
 
+  renderStrata();
+
   $('#principles').innerHTML = principles.map((p, i) => `
     <li class="principle">
-      <span class="principle-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+      <span class="principle-num" aria-hidden="true">${cote(i + 1)}</span>
       <span>
         <span class="principle-name">${esc(tx(p.name))}</span>
         <span class="principle-desc">${inline(tx(p.desc))}</span>
@@ -132,13 +164,41 @@ function renderHome() {
     </div>`).join('');
 }
 
+// La coupe. Une strate par couche, dans l'ordre de la profondeur, et les
+// projets posés dedans. `data-depth` pilote la densité des hachures en CSS.
+function renderStrata() {
+  const el = $('#strata');
+  if (!el) return;
+  el.innerHTML = strata().map((layer) => `
+    <li class="stratum" data-depth="${layer.depth}">
+      <span class="stratum-depth" aria-hidden="true">${cote(layer.depth)}</span>
+      <div>
+        <h3 class="stratum-name">${esc(tx(layer.name))}</h3>
+        <p class="stratum-note">${esc(tx(layer.note))}</p>
+        <ul class="stratum-blocks">
+          ${layer.items.map((p) => `
+            <li>
+              <button class="part" data-nav="projects" data-slug="${esc(p.slug)}">
+                <span class="part-name">${esc(p.name)}</span>
+                <span class="part-tag">${esc(tx(p.tagline))}</span>
+                <span class="part-foot">
+                  <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
+                  <span>${esc(p.year)}</span>
+                </span>
+              </button>
+            </li>`).join('')}
+        </ul>
+      </div>
+    </li>`).join('');
+}
+
 // ─── À propos ─────────────────────────────────────────────────────────
 function renderAbout() {
   $('#about-title').textContent = tx(about.title);
   $('#about-body').innerHTML = tx(about.body).map((p) => `<p>${inline(p)}</p>`).join('');
 }
 
-// ─── Parcours — le git log ────────────────────────────────────────────
+// ─── Parcours ─────────────────────────────────────────────────────────
 function renderExperience() {
   $('#gitlog').innerHTML = experience.map((job, i) => `
     <article class="commit${i === 0 ? ' is-head' : ''}" id="job-${esc(job.slug)}">
@@ -153,57 +213,66 @@ function renderExperience() {
       <ul class="diff">
         ${tx(job.highlights).map((h) => `<li><span class="diff-plus" aria-hidden="true">+</span><span>${inline(h)}</span></li>`).join('')}
       </ul>
-      <ul class="chips">${job.stack.map((s) => `<li class="chip">${esc(s)}</li>`).join('')}</ul>
+      <ul class="techs">${job.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
     </article>`).join('');
 }
 
 // ─── Projets ──────────────────────────────────────────────────────────
+// Groupés par couche, dans l'ordre de la coupe.
 function projectListHtml() {
   return `
-    <div class="section-head">
-      <p class="section-kicker">projects/</p>
-      <h1 class="section-title">${esc(t('projects.title'))}</h1>
-      <p class="section-lede">${esc(t('projects.lede'))}</p>
+    <div class="sheet-head">
+      <p class="sheet-kicker">00 · projects</p>
+      <h1 class="sheet-title">${esc(t('projects.title'))}</h1>
+      <p class="sheet-lede">${esc(t('projects.lede'))}</p>
     </div>
-    <div class="project-list">
-      ${projects.map((p) => `
-        <button class="project-card" data-nav="projects" data-slug="${esc(p.slug)}">
-          <span class="project-top">
-            <span class="project-name">${esc(p.name)}</span>
+    ${strata().filter((l) => l.items.length).map((layer) => `
+      <section class="layer-group" id="layer-${esc(layer.slug)}">
+        <div class="layer-head">
+          <span class="layer-depth" aria-hidden="true">${cote(layer.depth)}</span>
+          <h2 class="layer-name">${esc(tx(layer.name))}</h2>
+          <p class="layer-note">${esc(tx(layer.note))}</p>
+        </div>
+        ${layer.items.map((p) => `
+          <button class="project-row" data-nav="projects" data-slug="${esc(p.slug)}">
             <span class="project-year">${esc(p.year)}</span>
+            <span>
+              <span class="project-name">${esc(p.name)}</span>
+              <span class="project-tagline">${esc(tx(p.tagline))}</span>
+              <span class="project-meta">
+                <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
+                <span class="techs">${p.stack.slice(0, 4).map((s) => `<span>${esc(s)}</span>`).join(' · ')}</span>
+              </span>
+            </span>
             <span class="project-go" aria-hidden="true">→</span>
-          </span>
-          <span class="project-tagline">${esc(tx(p.tagline))}</span>
-          <span class="project-top">
-            <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
-            <span class="chips">${p.stack.slice(0, 4).map((s) => `<span class="chip">${esc(s)}</span>`).join('')}</span>
-          </span>
-        </button>`).join('')}
-    </div>`;
+          </button>`).join('')}
+      </section>`).join('')}`;
 }
 
 function projectDetailHtml(p) {
+  const layer = layers.find((l) => l.slug === p.layer);
   return `
     <div class="project-detail">
       <button class="project-back" data-nav="projects">
         <span aria-hidden="true">←</span> ${esc(t('projects.back'))}
       </button>
-      <div class="section-head">
-        <p class="section-kicker">projects/${esc(p.slug)}/README.md</p>
-        <h1 class="section-title">${esc(p.name)}</h1>
-        <p class="section-lede">${esc(tx(p.tagline))}</p>
+      <div class="sheet-head">
+        <p class="sheet-kicker">${layer ? `${cote(layer.depth)} · ${esc(tx(layer.name))}` : ''} · ${esc(p.slug)}</p>
+        <h1 class="sheet-title">${esc(p.name)}</h1>
+        <p class="sheet-lede">${esc(tx(p.tagline))}</p>
       </div>
 
-      <p class="project-top" style="margin-bottom: var(--space-6)">
+      <p class="project-meta">
         <span class="status" data-status="${esc(p.status)}">${esc(tx(STATUS_LABEL[p.status]))}</span>
         <span class="project-year">${esc(p.year)}</span>
       </p>
 
-      <div class="prose"><p>${inline(tx(p.summary))}</p></div>
+      <div class="prose" style="margin-top: var(--space-8)"><p>${inline(tx(p.summary))}</p></div>
 
       ${p.metrics?.length ? `<div class="metrics">${p.metrics.map((m) => `
         <div class="metric">
           <div class="metric-value">${esc(m.value)}</div>
+          <div class="metric-rule" aria-hidden="true"></div>
           <div class="metric-label">${esc(tx(m.label))}</div>
         </div>`).join('')}</div>` : ''}
 
@@ -216,11 +285,12 @@ function projectDetailHtml(p) {
 
       <section class="block">
         <h2 class="block-title">Stack</h2>
-        <ul class="chips">${p.stack.map((s) => `<li class="chip">${esc(s)}</li>`).join('')}</ul>
+        <ul class="techs">${p.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
         ${p.links.length ? `<div class="links-row">${p.links.map((l) => `
           <a class="cta" href="${esc(l.url)}" target="_blank" rel="noopener">
             ${esc(tx(l.label))} <span class="cta-arrow" aria-hidden="true">↗</span>
-          </a>`).join('')}</div>` : ''}
+          </a>`).join('')}</div>`
+        : `<p class="note" style="margin-top: var(--space-5)">${esc(t('projects.private'))}</p>`}
       </section>
     </div>`;
 }
@@ -238,9 +308,7 @@ function renderStack() {
       <h2 class="stack-group-title">${esc(tx(g.group))}</h2>
       ${g.items.map((i) => `
         <div class="skill">
-          <div class="skill-top">
-            <span class="skill-name">${esc(tx(i.name))}</span>
-          </div>
+          <span class="skill-name">${esc(tx(i.name))}</span>
           <p class="skill-note">${esc(tx(i.note))}</p>
         </div>`).join('')}
     </section>`).join('');
@@ -261,21 +329,6 @@ function renderContact() {
   $('#foot-right').textContent = `© ${new Date().getFullYear()} ${identity.name}`;
 }
 
-// ─── Gouttière de numéros de ligne ────────────────────────────────────
-// Purement décorative (aria-hidden) : on remplit chaque gouttière d'assez de
-// numéros pour couvrir la hauteur réelle de son buffer, le débordement est
-// masqué en CSS. Recalculée au redimensionnement et après chaque rendu.
-export function paintGutters() {
-  document.querySelectorAll('.section.is-active .buffer').forEach((buffer) => {
-    const gutter = buffer.querySelector('.gutter');
-    const body = buffer.querySelector('.buffer-body');
-    if (!gutter || !body) return;
-    const lh = parseFloat(getComputedStyle(gutter).lineHeight) || 22;
-    const count = Math.max(12, Math.ceil(body.getBoundingClientRect().height / lh));
-    gutter.textContent = Array.from({ length: count }, (_, i) => i + 1).join('\n');
-  });
-}
-
 // ─── Orchestration ────────────────────────────────────────────────────
 export function renderAll(route) {
   renderHome();
@@ -284,15 +337,15 @@ export function renderAll(route) {
   renderProjects(route);
   renderStack();
   renderContact();
-  renderTree(route);
-  renderTabs(route);
+  renderRail(route);
+  renderCartouche(route);
 }
 
-// Seules les parties dépendantes de la route (projets, arbre, onglets).
+// Seules les parties dépendantes de la route.
 export function renderRoute(route) {
   renderProjects(route);
-  renderTree(route);
-  renderTabs(route);
+  renderRail(route);
+  renderCartouche(route);
 }
 
 // Le shell a besoin de l'arborescence dans la langue courante.

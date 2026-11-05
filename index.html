@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Patrick Choumi — Élève ingénieur, génie informatique</title>
-  <meta name="description" content="Portfolio d’Ismaël Patrick Choumi Nami, élève ingénieur en génie informatique à Yaoundé. Un portfolio qui est aussi un système de fichiers : lisez la page, ou explorez-la au terminal." />
-  <meta name="theme-color" content="#0d1013" />
+  <meta name="description" content="Portfolio d’Ismaël Patrick Choumi Nami, élève ingénieur en génie informatique à Yaoundé. Une coupe technique : chaque projet posé à la couche où il travaille, de l’application jusqu’au socle." />
+  <meta name="theme-color" content="#0a1020" />
 
   <!-- Preuve de propriété Google Search Console. Elle doit rester dans le
        HTML statique : Google la relit périodiquement, et la retirer fait
@@ -13,25 +13,23 @@
        canonique et l'Open Graph à chaque navigation — il ne touche pas à
        celle-ci, et un test du harnais vérifie qu'elle survit. -->
   <meta name="google-site-verification" content="C55YMvsbs9BQuVu_PQoWqBbkdIZBaodr2mIMGeuggWI" />
+
   <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230d1013'/><text x='50' y='70' font-family='monospace' font-size='58' font-weight='700' fill='%237aa2f7' text-anchor='middle'>~/</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230a1020'/><g stroke='%2363b8ff' stroke-width='7' fill='none'><path d='M18 30h64M18 52h64M18 74h64'/></g></svg>" />
 
   <!-- Ces valeurs sont celles de l'accueil, et le point de départ de chaque
-       page : src/js/seo.js les remplace selon la route, avant que le
-       navigateur — ou l'indexeur de Google, qui exécute le script — ne lise
-       la tête du document. Sans lui, les onze URL du site partageraient un
-       seul titre et une seule description, et ne seraient qu'une page. -->
+       page : src/js/seo.js les remplace selon la route. -->
   <link rel="canonical" href="https://patrickchoumi.vercel.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="patrickchoumi" />
   <meta property="og:title" content="Patrick Choumi — Élève ingénieur, génie informatique" />
-  <meta property="og:description" content="Un portfolio qui est aussi un système de fichiers. Lisez la page, ou explorez-la au terminal." />
+  <meta property="og:description" content="Une coupe technique : chaque projet posé à la couche où il travaille, de l’application jusqu’au socle." />
   <meta property="og:url" content="https://patrickchoumi.vercel.app/" />
   <meta name="twitter:card" content="summary" />
 
-  <!-- Polices auto-hébergées (voir scripts/fetch-fonts.mjs) : aucune requête
-       vers un tiers au chargement. Le portfolio affirme ne rien envoyer
-       nulle part — un lien vers un CDN de polices ferait mentir la page. -->
+  <!-- Polices auto-hébergées : aucune requête vers un tiers au chargement.
+       Le site affirme ne rien envoyer nulle part — un lien vers un CDN de
+       polices ferait mentir la page. -->
   <link rel="preload" href="/fonts/jetbrains-mono-500.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/src/styles/main.css" />
@@ -44,145 +42,126 @@
      Ne s'affiche qu'une fois par session, et jamais en reduced-motion. -->
 <div id="boot" class="boot hidden" aria-hidden="true"></div>
 
-<button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="sidebar">▤</button>
+<button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="rail">≡</button>
 
-<!-- ═══════════ EXPLORATEUR ═══════════ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-head">
+<!-- ═══════════ LE RAIL DE PROFONDEUR ═══════════ -->
+<aside class="rail" id="rail">
+  <div class="rail-head">
     <button class="brand" data-nav="home" aria-label="Accueil">
-      <span class="brand-prompt" aria-hidden="true">~/</span><span id="brand-name">patrickchoumi</span><span class="brand-caret" aria-hidden="true"></span>
+      <span class="brand-mark" aria-hidden="true">▤</span><span class="brand-name" id="brand-name">patrickchoumi</span>
     </button>
     <p class="brand-sub" id="brand-role"></p>
     <p class="availability" id="availability"></p>
   </div>
 
-  <nav class="tree" id="tree" aria-label="Contenu du site"></nav>
+  <nav class="rail-body" id="rail-nav" aria-label="Contenu du site"></nav>
 
-  <div class="sidebar-foot">
-    <button class="icon-btn" id="btn-search" data-title="palette" aria-label="Palette de commandes (Ctrl K)">⌘K</button>
+  <div class="rail-foot">
+    <button class="icon-btn" id="btn-search" aria-label="Palette de commandes (Ctrl K)">⌘K</button>
     <button class="icon-btn" id="btn-lang" aria-label="Changer de langue">FR</button>
     <button class="icon-btn" id="btn-theme" aria-label="Changer de thème">◐</button>
   </div>
 </aside>
 <div class="nav-scrim hidden" id="nav-scrim"></div>
 
-<!-- ═══════════ BUFFERS ═══════════ -->
+<!-- ═══════════ LES PLANCHES ═══════════ -->
 <main id="main">
-  <div class="buffer-tabs" id="tabs" role="tablist" aria-label="Fichiers ouverts"></div>
+  <section id="home" class="section is-active">
+    <div class="sheet">
+      <header class="hero">
+        <p class="sheet-kicker" id="hero-kicker"></p>
+        <h1 class="hero-title" id="hero-title"></h1>
+        <p class="hero-identity" id="hero-identity"></p>
 
-  <section id="home" class="section is-active" data-file="README.md">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body">
-        <header class="hero">
-          <p class="section-kicker" id="hero-kicker"></p>
-          <h1 class="hero-title" id="hero-title"></h1>
-          <p class="hero-identity" id="hero-identity"></p>
+        <!-- REPL animé : le site répond à des questions plutôt que de se
+             décrire. Décoratif → le titre et la lede portent le sens. -->
+        <div class="repl" aria-hidden="true">
+          <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-q" id="repl-q"></span></p>
+          <p class="repl-a" id="repl-a"></p>
+          <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-cursor"></span></p>
+        </div>
 
-          <!-- REPL animé : le site répond à des questions plutôt que de se
-               décrire. Décoratif → le titre et la lede portent le sens. -->
-          <div class="repl" aria-hidden="true">
-            <div class="repl-bar">
-              <span class="repl-dots"><i></i><i></i><i></i></span>
-              <span class="repl-name" id="repl-name">portfolio — repl</span>
-            </div>
-            <div class="repl-body">
-              <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-q" id="repl-q"></span></p>
-              <p class="repl-a" id="repl-a"></p>
-              <p class="repl-line"><span class="repl-prompt">?</span><span class="repl-cursor"></span></p>
-            </div>
-          </div>
+        <p class="hero-lede" id="hero-lede"></p>
 
-          <p class="hero-lede" id="hero-lede"></p>
+        <div class="hero-actions">
+          <button class="cta" data-nav="projects">
+            <span data-i18n="cta.projects">Voir les projets</span>
+            <span class="cta-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="cta is-ghost" id="cta-term">
+            <span data-i18n="cta.term">…ou explorer au terminal</span>
+            <kbd>`</kbd>
+          </button>
+        </div>
+      </header>
 
-          <div class="hero-actions">
-            <button class="cta" data-nav="projects">
-              <span data-i18n="cta.projects">Voir les projets</span>
-              <span class="cta-arrow" aria-hidden="true">→</span>
-            </button>
-            <button class="cta is-ghost" id="cta-term">
-              <span data-i18n="cta.term">…ou explorer au terminal</span>
-              <kbd>`</kbd>
-            </button>
-          </div>
-        </header>
+      <!-- LA COUPE. Construite par src/js/render.js à partir des couches
+           déclarées dans profile.js : aucune strate n'est écrite ici. -->
+      <section class="block reveal" aria-labelledby="coupe-title">
+        <h2 class="block-title" id="coupe-title" data-i18n="block.coupe">La coupe</h2>
+        <ol class="strata" id="strata"></ol>
+      </section>
 
-        <section class="block reveal">
-          <h2 class="block-title" data-i18n="block.principles">Convictions</h2>
-          <ol class="principles" id="principles"></ol>
-        </section>
+      <section class="block reveal">
+        <h2 class="block-title" data-i18n="block.principles">Convictions</h2>
+        <ol class="principles" id="principles"></ol>
+      </section>
 
-        <section class="block reveal">
-          <h2 class="block-title" data-i18n="block.facts">Fiche</h2>
-          <div class="facts" id="facts"></div>
-        </section>
+      <section class="block reveal">
+        <h2 class="block-title" data-i18n="block.facts">Fiche</h2>
+        <div class="facts" id="facts"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="about" class="section">
+    <div class="sheet">
+      <div class="sheet-head">
+        <p class="sheet-kicker">00 · about</p>
+        <h1 class="sheet-title" id="about-title"></h1>
       </div>
+      <div class="prose" id="about-body"></div>
     </div>
   </section>
 
-  <section id="about" class="section" data-file="about.md">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body">
-        <div class="section-head">
-          <p class="section-kicker">about.md</p>
-          <h1 class="section-title" id="about-title"></h1>
-        </div>
-        <div class="prose" id="about-body"></div>
+  <section id="experience" class="section">
+    <div class="sheet">
+      <div class="sheet-head">
+        <p class="sheet-kicker">00 · experience</p>
+        <h1 class="sheet-title" data-i18n="exp.title">Parcours</h1>
+        <p class="sheet-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque étape de la formation est un commit ; les lignes marquées sont ce qui a été appris.</p>
       </div>
+      <div class="gitlog" id="gitlog"></div>
     </div>
   </section>
 
-  <section id="experience" class="section" data-file="experience/">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body">
-        <div class="section-head">
-          <p class="section-kicker">git log --graph</p>
-          <h1 class="section-title" data-i18n="exp.title">Parcours</h1>
-          <p class="section-lede" data-i18n="exp.lede">Le plus récent en premier. Chaque étape de la formation est un commit ; les lignes marquées sont ce qui a été appris.</p>
-        </div>
-        <div class="gitlog" id="gitlog"></div>
+  <section id="projects" class="section">
+    <div class="sheet" id="projects-body"></div>
+  </section>
+
+  <section id="stack" class="section">
+    <div class="sheet">
+      <div class="sheet-head">
+        <p class="sheet-kicker">00 · stack</p>
+        <h1 class="sheet-title" data-i18n="stack.title">Stack</h1>
+        <p class="sheet-lede" data-i18n="stack.lede">Groupée par couche, comme les projets : ce que j’écris en haut n’est pas ce que j’écris en bas, et c’est le propos.</p>
       </div>
+      <div id="stack-body"></div>
     </div>
   </section>
 
-  <section id="projects" class="section" data-file="projects/">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body" id="projects-body"></div>
-    </div>
-  </section>
-
-  <section id="stack" class="section" data-file="stack/">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body">
-        <div class="section-head">
-          <p class="section-kicker">stack/</p>
-          <h1 class="section-title" data-i18n="stack.title">Stack</h1>
-          <p class="section-lede" data-i18n="stack.lede">Ce que j’utilise, et ce que j’en sais. Le C d’abord, le reste par-dessus.</p>
-        </div>
-        <div id="stack-body"></div>
+  <section id="contact" class="section">
+    <div class="sheet">
+      <div class="sheet-head">
+        <p class="sheet-kicker">00 · contact</p>
+        <h1 class="sheet-title" id="contact-title"></h1>
+        <p class="sheet-lede" id="contact-lede"></p>
       </div>
-    </div>
-  </section>
-
-  <section id="contact" class="section" data-file="contact.md">
-    <div class="buffer">
-      <div class="gutter" aria-hidden="true"></div>
-      <div class="buffer-body">
-        <div class="section-head">
-          <p class="section-kicker">contact.md</p>
-          <h1 class="section-title" id="contact-title"></h1>
-          <p class="section-lede" id="contact-lede"></p>
-        </div>
-        <div class="contact-links" id="contact-links"></div>
-        <p class="note" id="contact-note"></p>
-        <div class="foot">
-          <span id="foot-left"></span>
-          <span id="foot-right"></span>
-        </div>
+      <div class="contact-links" id="contact-links"></div>
+      <p class="note" id="contact-note"></p>
+      <div class="foot">
+        <span id="foot-left"></span>
+        <span id="foot-right"></span>
       </div>
     </div>
   </section>
@@ -191,7 +170,7 @@
 <!-- ═══════════ TERMINAL ═══════════ -->
 <section class="term" id="term" aria-label="Terminal" aria-hidden="true">
   <div class="term-bar">
-    <span class="term-bar-title">bash — portfolio</span>
+    <span class="term-bar-title">console</span>
     <span class="term-bar-spacer"></span>
     <span class="term-hint" id="term-hint"></span>
     <button class="term-close" id="term-close" aria-label="Fermer le terminal">✕</button>
@@ -203,13 +182,15 @@
   </div>
 </section>
 
-<!-- ═══════════ BARRE DE STATUT ═══════════ -->
-<footer class="statusbar">
-  <span class="status-mode" id="status-mode">LIRE</span>
-  <span class="status-path" id="status-path">~/</span>
-  <span class="status-spacer"></span>
-  <span class="status-hint" id="status-hint"></span>
-  <button class="status-btn" id="status-term">
+<!-- ═══════════ LE CARTOUCHE ═══════════ -->
+<footer class="cartouche">
+  <span class="cart-cell is-mode"><span class="cart-val" id="cart-mode">LIRE</span></span>
+  <span class="cart-cell"><span class="cart-key" data-i18n="cart.sheet">Planche</span><span class="cart-val" id="cart-sheet">home</span></span>
+  <span class="cart-cell is-depth"><span class="cart-key" data-i18n="cart.depth">Prof.</span><span class="cart-val" id="cart-depth">00</span></span>
+  <span class="cart-cell is-rev"><span class="cart-key" data-i18n="cart.rev">Rév.</span><span class="cart-val" id="cart-rev"></span></span>
+  <span class="cart-spacer"></span>
+  <span class="cart-cell is-hint"><span class="cart-val" id="cart-hint"></span></span>
+  <button class="cart-btn" id="cart-term">
     <span aria-hidden="true">▸</span><span data-i18n="status.terminal">terminal</span>
   </button>
 </footer>

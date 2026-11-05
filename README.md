@@ -1,13 +1,15 @@
 # patrickchoumi/portfolio
 
-Un portfolio qui est aussi un système de fichiers.
+Un portfolio en coupe.
 
-Deux vues sur exactement la même matière : une page éditoriale qui se lit
-normalement, et un terminal réel (touche <kbd>`</kbd>) où le contenu devient
-une arborescence qu'on explore à la commande. Ce n'est pas une décoration :
-`cd projects` déplace la page, cliquer sur un projet déplace le shell.
+Les projets qu'il présente ne sont pas du même genre, parce qu'ils ne sont pas
+à la même profondeur : un site de réservation, un service qui garde un
+téléphone, un environnement de bureau, et un système d'exploitation immuable.
+L'accueil est donc une coupe technique — chaque projet posé à la couche où il
+travaille, de l'application jusqu'au socle. Et le même contenu s'explore aussi
+à la commande, dans une console rangée dans le cartouche.
 
-![Accueil](docs/captures/accueil-clair.png)
+![La coupe](docs/captures/coupe.png)
 
 ---
 
@@ -18,9 +20,9 @@ la met en pratique sous les yeux du visiteur :
 
 | Ce qui est affirmé | Ce qui le prouve, dans le site même |
 | --- | --- |
-| « Peu de dépendances » | zéro dépendance à l'exécution ; 33 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
+| « Peu de dépendances » | zéro dépendance à l'exécution ; 39 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 46 tests unitaires + 31 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
+| « Les garanties se prouvent » | 47 tests unitaires + 31 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
 ## Démarrer
@@ -59,10 +61,11 @@ utilisée telle quelle dans les deux langues (pratique pour les noms propres).
 ```js
 export const projects = [
   {
-    slug: 'atlas',                    // → /projets/atlas et projects/atlas/
-    name: 'Atlas',
+    slug: 'ankh',                     // → /projets/ankh et projects/ankh/
+    name: 'Ankh',
     year: '2026',
-    status: 'planned',                // live | wip | planned | archived
+    status: 'wip',                    // live | wip | planned | archived
+    layer: 'socle',                   // ← la couche : elle place le projet dans la coupe
     tagline: { fr: '…', en: '…' },
     summary: { fr: '…', en: '…' },
     highlights: { fr: ['…'], en: ['…'] },
@@ -86,14 +89,15 @@ plutôt qu'en couleur. La description dit alors une intention, pas un résultat.
 > ⚠️ Si tu repars de ce dépôt : le contenu de `profile.js` est le parcours de
 > son auteur. Remplace-le par le tien avant de publier.
 
-![Projets](docs/captures/projets.png)
+![Accueil](docs/captures/accueil-clair.png)
+
 
 ## Le terminal
 
 ![Terminal](docs/captures/terminal.png)
 
 Ouvrir : <kbd>`</kbd> ou <kbd>²</kbd> (même touche physique en AZERTY), ou le
-bouton `▸ terminal` de la barre de statut.
+bouton `▸ terminal` du cartouche.
 
 ```
 /
@@ -163,43 +167,79 @@ src/js/repl.js          le REPL animé de l'accueil
 src/js/boot.js          séquence de démarrage (une fois par session)
 src/js/seo.js           titre, description et canonique par route
 src/js/effects.js       révélation au défilement + easter egg
-src/styles/main.css     design system « éditeur »
+src/styles/main.css     design system « la coupe »
 scripts/fetch-fonts.mjs auto-hébergement des polices
 scripts/build-sitemap.mjs sitemap.xml + robots.txt, dérivés des routes
-tests/                  46 tests node:test — logique pure
+tests/                  47 tests node:test — logique pure
 tests-e2e/browser.mjs   31 vérifications navigateur
 ```
 
 Le principe structurant : **`navigate()` est le seul point de passage**. Clic
-dans l'explorateur, entrée de la palette, commande `cd`, bouton Précédent du
+dans le rail, entrée de la palette, commande `cd`, bouton Précédent du
 navigateur, lien profond — tout converge au même endroit, qui met à jour la
-section, l'URL, les onglets, l'explorateur et le répertoire courant du shell.
+section, l'URL, la tête du document, le rail, le cartouche et le répertoire
+courant du shell.
 
-## Design
+## La direction
 
-Filiation assumée avec le système « Terminal » du projet *Theory* : monospace
-pour l'ossature, sans-serif pour la prose, filets fins, un seul accent, palette
-d'éditeur claire et sombre. Ce qui change ici : l'interface n'imite pas un
-terminal, elle **est** un éditeur ouvert sur un dépôt — barre latérale =
-arborescence, section = buffer avec son onglet et sa gouttière de numéros de
-ligne, barre de statut en bas, terminal escamotable.
+Les deux versions précédentes de ce site imitaient un éditeur de code :
+onglets de buffer, gouttière de numéros de ligne, arborescence de fichiers.
+C'était juste tant que les projets étaient des sites. Ils ne le sont plus — il
+y a maintenant un OS immuable, un environnement de bureau en Qt, des unités
+systemd, un service Android. Un portfolio qui ressemble à VS Code dit
+« développeur web » d'un auteur qui passe ses nuits sous la ligne de flottaison.
 
-- **Typographie** : JetBrains Mono (ossature) + Inter (prose), auto-hébergées.
-- **Couleur** : un seul accent, un **bleu** décliné clair/sombre — celui des
-  dossiers dans un `ls`, celui d'un lien dans un éditeur. Un vert phosphore a
-  été essayé et retiré : il tirait l'ensemble vers l'écran cathodique, alors
-  que la page se veut un poste de travail d'aujourd'hui. Le vert ne reste que
-  là où il veut dire quelque chose : le `[ ok ]` du log de démarrage et le `+`
-  d'un diff. Tous les couples texte/fond visent au minimum le ratio AA (4,5:1).
-- **Pas de photo de profil.** Un portrait a été essayé et retiré : l'identité
-  d'un poste de travail, c'est son invite. Le site s'identifie par son `~/` et
-  par la vignette en caractères de `neofetch`.
-- **La stack sans jauges.** « Quatre sur cinq » ne veut rien dire pour qui lit,
-  et beaucoup trop pour qui l'écrit. Une phrase honnête à la place.
+**D'où la coupe.** Le fait le plus intéressant de ces projets n'est pas leur
+technologie, c'est leur profondeur. `profile.js` déclare quatre couches, chaque
+projet en désigne une, et tout le reste en découle : la coupe de l'accueil, le
+rail de gauche, le groupement de la liste, la cote du cartouche, et jusqu'à la
+première ligne du README virtuel au terminal. Un projet dont la couche
+n'existe pas ferait échouer `npm test`, et une couche sans projet aussi.
+
+Trois règles tiennent le dessin.
+
+**1. On descend.** La profondeur est l'axe du site : cotée à gauche de 00 à 03,
+elle ordonne tout ce qui est listé. Rien n'est trié par date quand il peut
+l'être par couche. Les **hachures** ne sont pas un ornement : leur densité est
+l'information. Elles se resserrent à mesure qu'on descend — c'est la convention
+d'une coupe géotechnique, et elle rend la profondeur lisible sans lire une
+seule étiquette. On les coupe à l'impression, où elles mangeraient le texte.
+
+**2. Le trait, pas la boîte.** Un filet d'un pixel, des hachures, une cote.
+Aucune carte, aucune ombre portée, aucune pastille arrondie. Ce qui sépare,
+c'est une ligne ; ce qui qualifie, c'est une étiquette en capitales à chasse
+fixe. Les chiffres d'une fiche projet sont **cotés** comme sur un plan : la
+valeur, un filet qui se trace, l'unité.
+
+**3. Deux encres sur deux papiers.** En clair, un papier froid et une encre
+indigo. En sombre, le bleu de plan et un cyan qui s'y lit. Le sombre n'est pas
+le clair inversé : ses fonds sont choisis, et l'accent y est repris à une
+clarté qui tient dessus. Un vert phosphore puis un bleu de dossier avaient
+précédé — le premier tirait vers l'écran cathodique, le second désignait un
+fichier là où il s'agit maintenant de tracer une ligne.
+
+- **Typographie** : JetBrains Mono pour l'ossature, Inter pour la prose, toutes
+  deux auto-hébergées. Elles n'ont pas changé, et c'est délibéré : le site
+  garantit qu'aucune requête ne sort vers un tiers, et une police de plus
+  serait 60 Ko pour un effet que le dessin obtient déjà.
+- **Le terminal reste, mais il change de statut.** Ce n'est plus la métaphore
+  qui organise le site, c'est un outil rangé dans le cartouche. Quelqu'un qui
+  écrit un système d'exploitation a une console sous la main ; ça n'en fait pas
+  un décor.
 - **Mouvement** : `prefers-reduced-motion` coupe le REPL animé, la séquence de
-  démarrage, la révélation au défilement et l'easter egg.
+  démarrage, la révélation au défilement et le tracé des cotes.
 
-![Parcours](docs/captures/parcours.png)
+Ce qui a été retiré en passant à cette version, et pourquoi :
+
+| Retiré | Pourquoi |
+| --- | --- |
+| Les onglets de buffer | Ils répétaient le rail, en travers de la lecture, et appartenaient à la métaphore de l'éditeur. |
+| La gouttière de numéros de ligne | Du bruit sur chaque écran pour une métaphore que le site ne revendique plus. |
+| L'arborescence de fichiers comme navigation | Remplacée par l'échelle de profondeur : elle dit quelque chose du contenu, pas seulement de sa forme. |
+| La fenêtre à pastilles du REPL | Un objet d'interface de plus ; il ne lui reste qu'un filet en marge, comme une annotation. |
+| Les pastilles de technologie | Douze boîtes arrondies là où des mots séparés d'un point médian suffisent. |
+
+![Une fiche projet, en bleu de plan](docs/captures/parcours.png)
 
 ## Indexation
 

@@ -102,37 +102,41 @@ async function main() {
     assert((await page.$$('.principle')).length === 3, 'convictions manquantes');
   });
 
-  await check('l’explorateur et les onglets sont peuplés', async () => {
-    assert((await page.$$('.tree-item')).length >= 6, 'arbre incomplet');
-    assert((await page.$$('.buffer-tab')).length === 6, 'onglets incomplets');
+  await check('le rail et la coupe sont peuplés', async () => {
+    assert((await page.$$('.rail-item')).length >= 10, 'rail incomplet');
+    // La coupe est l'armature du site : une strate par couche, et chaque
+    // projet posé dans la sienne. Vide, l'accueil ne dit plus rien.
+    assert((await page.$$('#strata .stratum')).length === 4, 'la coupe n’a pas ses quatre strates');
+    assert((await page.$$('#strata .part')).length >= 8, 'des projets manquent dans la coupe');
   });
 
   await check('naviguer vers les projets change l’URL et la section', async () => {
-    await page.click('.tree-item[data-nav="projects"]');
+    await page.click('.rail-item[data-nav="projects"]');
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets', `URL inattendue : ${page.url()}`);
     assert(await page.isVisible('#projects.is-active'), 'section projets non affichée');
-    assert((await page.$$('.project-card')).length >= 3, 'cartes projet manquantes');
+    assert((await page.$$('.project-row')).length >= 8, 'rangées projet manquantes');
+    assert((await page.$$('.layer-group')).length === 4, 'les projets ne sont pas groupés par couche');
   });
 
   await check('ouvrir une fiche projet donne une URL partageable', async () => {
-    await page.click('.project-card[data-slug="theory"]');
+    await page.click('.project-row[data-slug="theory"]');
     await page.waitForTimeout(250);
     assert(new URL(page.url()).pathname === '/projets/theory', 'URL de fiche incorrecte');
-    assert((await page.textContent('#projects .section-title')).includes('Theory'), 'fiche non rendue');
+    assert((await page.textContent('#projects .sheet-title')).includes('Theory'), 'fiche non rendue');
     assert((await page.$$('#projects .metric')).length >= 2, 'métriques absentes');
   });
 
   await check('un lien profond ouvre directement la fiche', async () => {
-    await page.goto(`${base}/projets/atlas`, { waitUntil: 'networkidle' });
+    await page.goto(`${base}/projets/minsapp`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(300);
     assert(await page.isVisible('#projects.is-active'), 'deep-link : mauvaise section');
-    assert((await page.textContent('#projects .section-title')).includes('Atlas'), 'deep-link cassé');
+    assert((await page.textContent('#projects .sheet-title')).includes('Minsapp'), 'deep-link cassé');
   });
 
   await check('le bouton Précédent revient à la page précédente', async () => {
     await page.goto(base, { waitUntil: 'networkidle' });
-    await page.click('.tree-item[data-nav="stack"]');
+    await page.click('.rail-item[data-nav="stack"]');
     await page.waitForTimeout(200);
     await page.goBack();
     await page.waitForTimeout(250);
@@ -144,7 +148,7 @@ async function main() {
     await page.keyboard.press('`');
     await page.waitForTimeout(350);
     assert(await page.isVisible('#term.is-open'), 'terminal fermé');
-    assert((await page.textContent('#status-mode')).includes('SHELL'), 'mode non mis à jour');
+    assert((await page.textContent('#cart-mode')).includes('SHELL'), 'mode non mis à jour');
   });
 
   await check('`ls` liste la racine du système de fichiers', async () => {
@@ -159,7 +163,7 @@ async function main() {
     await page.fill('#term-input', 'cd projects');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(300);
-    assert((await page.textContent('#status-path')).includes('projects'), 'chemin non mis à jour');
+    assert((await page.textContent('#cart-sheet')).includes('projects'), 'cartouche non mis à jour');
     assert(await page.isVisible('#projects.is-active'), 'la page n’a pas suivi le shell');
   });
 
@@ -229,7 +233,7 @@ async function main() {
     assert(['fr', 'en'].includes(after) && after !== before, `langue non basculée (${before} → ${after})`);
     assert((await page.textContent('.hero-lede')) !== heroBefore, 'la lede n’a pas été retraduite');
     // Le contenu dérivé des données doit suivre, pas seulement le chrome.
-    await page.click('.tree-item[data-nav="experience"]');
+    await page.click('.rail-item[data-nav="experience"]');
     await page.waitForTimeout(300);
     const summary = await page.textContent('#gitlog .commit-summary');
     assert(summary.trim().length > 20, 'parcours vide après changement de langue');
@@ -237,7 +241,7 @@ async function main() {
 
   // Les sept routes réelles, et les largeurs auxquelles on les éprouve.
   const VIEWPORTS = [[320, 568], [360, 640], [390, 844], [414, 896], [768, 1024], [1024, 768], [1280, 800], [1920, 1080]];
-  const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/kairus', '/stack', '/contact'];
+  const ROUTES = ['/', '/about', '/parcours', '/projets', '/projets/ankh', '/stack', '/contact'];
 
   // ─── Indexation ─────────────────────────────────────────────────────
   await check('la preuve de propriété Google survit à la navigation', async () => {
@@ -387,7 +391,7 @@ async function main() {
   });
 
   await check('le terminal reste utilisable sur un téléphone de 320 px', async () => {
-    // Le défaut d'origine : l'invite `patrickchoumi@portfolio:~/projects/kairus$`
+    // Le défaut d'origine : l'invite `patrickchoumi@portfolio:~/projects/ankh-de$`
     // ne rétrécit pas, et le champ de saisie tombait à ZÉRO pixel de large.
     // On ne pouvait plus taper une seule commande depuis un mobile.
     const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true });
@@ -395,12 +399,12 @@ async function main() {
     await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
     await p.goto(base, { waitUntil: 'networkidle' });
     await p.waitForTimeout(300);
-    await p.tap('#status-term');
+    await p.tap('#cart-term');
     await p.waitForTimeout(400);
     assert(await p.isVisible('#term.is-open'), 'terminal non ouvert');
 
     // Une fois dans le dossier au nom le plus long, le champ doit tenir.
-    await p.fill('#term-input', 'cd projects/kairus');
+    await p.fill('#term-input', 'cd projects/ankh-de');
     await p.keyboard.press('Enter');
     await p.waitForTimeout(300);
     await p.fill('#term-input', 'ls');
@@ -421,11 +425,11 @@ async function main() {
     await p.addInitScript(() => sessionStorage.setItem('portfolio_booted', '1'));
     await p.goto(base, { waitUntil: 'networkidle' });
     await p.waitForTimeout(300);
-    assert(!(await p.isVisible('.sidebar')), 'la barre latérale fermée reste exposée');
+    assert(!(await p.isVisible('.rail')), 'le rail fermé reste exposé');
     // Ouverte, elle redevient atteignable — sinon le remède tuerait le menu.
     await p.click('#nav-toggle');
     await p.waitForTimeout(400);
-    assert(await p.isVisible('.sidebar .tree-item'), 'la barre latérale ouverte n’est pas atteignable');
+    assert(await p.isVisible('.rail .rail-item'), 'le rail ouvert n’est pas atteignable');
     await ctx.close();
   });
 
@@ -523,7 +527,7 @@ async function main() {
     await p.goto(`${base}/projets/theory`, { waitUntil: 'networkidle' });
     await p.waitForTimeout(400);
     assert((await p.$('#boot')) === null, 'le log de démarrage s’affiche sur un deep-link');
-    assert((await p.textContent('#projects .section-title')).includes('Theory'), 'fiche non rendue');
+    assert((await p.textContent('#projects .sheet-title')).includes('Theory'), 'fiche non rendue');
     await ctx.close();
   });
 
@@ -560,12 +564,12 @@ async function main() {
     await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(SHOT_DIR, '03-terminal.png') });
     await page.keyboard.press('Escape');
-    await page.click('.tree-item[data-nav="experience"]');
+    await page.click('.rail-item[data-nav="experience"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '04-parcours.png') });
-    await page.click('.tree-item[data-nav="projects"]');
+    await page.click('.rail-item[data-nav="projects"]');
     await page.waitForTimeout(400);
-    await page.click('.project-card[data-slug="theory"]');
+    await page.click('.project-row[data-slug="theory"]');
     await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOT_DIR, '05-projet.png') });
     await page.setViewportSize({ width: 400, height: 780 });
