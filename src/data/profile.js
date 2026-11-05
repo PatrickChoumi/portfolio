@@ -76,8 +76,8 @@ export const layers = [
     depth: 2,
     name: { fr: 'Service', en: 'Service' },
     note: {
-      fr: 'Ce qui tourne sans qu’on le regarde : unités systemd, pare-feu, services d’accessibilité.',
-      en: 'What runs while nobody watches: systemd units, firewalls, accessibility services.'
+      fr: 'Ce qui tourne sans qu’on le regarde, et qui veille sur ce que fait une autre application.',
+      en: 'What runs while nobody watches, keeping an eye on what another application does.'
     }
   },
   {
@@ -125,13 +125,13 @@ export const about = {
   file: 'about.md',
   body: {
     fr: [
-      'Je code depuis trois ans. J’ai commencé par le C et Linux, puis j’ai suivi la pente — et la pente descend. Python, JavaScript, Java pour construire des applications ; puis le C++ et Qt pour habiller un bureau ; puis systemd, nftables et les images immuables pour tenir le système lui-même. Ce qui m’intéresse, c’est ce qui se passe sous l’abstraction.',
+      'Je code depuis trois ans. J’ai commencé par le C et Linux, puis j’ai suivi la pente — et la pente descend. Python, JavaScript, Java pour construire des applications ; puis le C++ et Qt pour habiller un bureau ; puis systemd, les services d’accessibilité et les images immuables pour tenir le système lui-même. Ce qui m’intéresse, c’est ce qui se passe sous l’abstraction.',
       'Mon travail tourne autour d’une idée simple : **la clarté est une fonctionnalité**. Un code lisible se corrige plus vite, une interface lisible se traverse sans notice, une donnée bien nommée survit à son auteur. Le reste — la vitesse, la robustesse, l’accessibilité — en découle souvent naturellement.',
       'Elle a une conséquence que j’applique partout : **chaque dépôt dit où il en est**. Un fichier d’avancement, des décisions numérotées, et ce qui n’a pas encore tourné sur une vraie machine écrit noir sur blanc. Annoncer fini ce qui ne l’est pas coûte plus cher que le retard lui-même.',
       'En dehors du code : les échecs, la lecture — romans et mangas — et le sport.'
     ],
     en: [
-      'I have been coding for three years. I started with C and Linux, then followed the slope — and the slope goes down. Python, JavaScript, Java to build applications; then C++ and Qt to dress a desktop; then systemd, nftables and immutable images to hold the system itself. What interests me is what happens beneath the abstraction.',
+      'I have been coding for three years. I started with C and Linux, then followed the slope — and the slope goes down. Python, JavaScript, Java to build applications; then C++ and Qt to dress a desktop; then systemd, accessibility services and immutable images to hold the system itself. What interests me is what happens beneath the abstraction.',
       'My work revolves around one idea: **clarity is a feature**. Readable code is fixed faster, a readable interface needs no manual, well-named data outlives its author. The rest — speed, robustness, accessibility — usually follows.',
       'It has one consequence I apply everywhere: **every repository states where it stands**. A progress file, numbered decisions, and whatever has not yet run on real hardware written down plainly. Calling something finished when it is not costs more than the delay itself.',
       'Away from the keyboard: chess, reading — novels and manga — and sport.'
@@ -287,44 +287,6 @@ export const projects = [
     stack: ['C++', 'Qt 6', 'KWin', 'Plasma 6', 'QML'],
     links: [
       { label: { fr: 'Dépôt', en: 'Repository' }, url: 'https://github.com/PatrickChoumi/Ankh-DE' }
-    ]
-  },
-  {
-    slug: 'safezone',
-    name: 'SafeZone',
-    year: '2026',
-    status: 'wip',
-    layer: 'service',
-    tagline: {
-      fr: 'Un blocage réparti sur huit composants, et jamais une boîte noire.',
-      en: 'A block spread over eight components, and never a black box.'
-    },
-    summary: {
-      fr: 'Un filtre de contenu pour une machine Linux personnelle, réparti sur huit composants indépendants — DNS, pare-feu nftables, politiques de navigateur, unités systemd — pour qu’aucun ne soit le maillon unique. Le parti pris est inhabituel : l’outil n’est **pas** conçu pour être impossible à retirer. Il est conçu pour que le retrait demande de savoir ce qu’on fait, où, et dans quel ordre.',
-      en: 'A content filter for a personal Linux machine, spread over eight independent components — DNS, nftables firewall, browser policies, systemd units — so that none is a single point of failure. The stance is unusual: the tool is **not** designed to be impossible to remove. It is designed so that removing it requires knowing what you are doing, where, and in what order.'
-    },
-    highlights: {
-      fr: [
-        'La désinstallation tient en quatre phases et huit commandes, avec un jeton tiré au hasard à chaque étape : assez pour écarter le geste impulsif, jamais assez pour piéger la machine.',
-        'La procédure manuelle équivalente est affichable à tout moment — une machine qu’on ne peut plus réparer soi-même est un échec, pas une sécurité.',
-        'L’état se vérifie par de vraies requêtes DNS, pas en lisant un fichier de configuration.',
-        'Fonctionne sur toute distribution offrant systemd et nftables, et parle français ou anglais selon la locale.'
-      ],
-      en: [
-        'Uninstalling takes four phases and eight commands, with a random token at each step: enough to rule out the impulsive gesture, never enough to trap the machine.',
-        'The equivalent manual procedure can be printed at any time — a machine you can no longer repair yourself is a failure, not a safeguard.',
-        'State is verified by real DNS queries, not by reading a configuration file.',
-        'Runs on any distribution offering systemd and nftables, and speaks French or English depending on the locale.'
-      ]
-    },
-    metrics: [
-      { label: { fr: 'composants', en: 'components' }, value: '8' },
-      { label: { fr: 'distributions', en: 'distributions' }, value: '7' },
-      { label: { fr: 'scripts shell', en: 'shell scripts' }, value: '19' }
-    ],
-    stack: ['Shell', 'systemd', 'nftables', 'dnsmasq'],
-    links: [
-      { label: { fr: 'Dépôt', en: 'Repository' }, url: 'https://github.com/PatrickChoumi/safezone' }
     ]
   },
   {
@@ -578,7 +540,7 @@ export const stack = [
     group: { fr: 'Socle', en: 'Base' },
     items: [
       { name: 'C', note: { fr: 'Le premier, et celui qui explique les autres.', en: 'The first one, and the one that explains the rest.' } },
-      { name: 'Linux', note: { fr: 'systemd, nftables, images immuables.', en: 'systemd, nftables, immutable images.' } },
+      { name: 'Linux', note: { fr: 'systemd, images immuables, démarrage vérifié.', en: 'systemd, immutable images, verified boot.' } },
       { name: 'Git', note: { fr: 'Branches, historique lisible, retours en arrière.', en: 'Branches, readable history, going back.' } },
       { name: { fr: 'Intégration continue', en: 'Continuous integration' }, note: { fr: 'Là où une mesure devient une garantie.', en: 'Where a measurement becomes a guarantee.' } }
     ]
