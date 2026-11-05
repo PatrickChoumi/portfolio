@@ -22,7 +22,7 @@ la met en pratique sous les yeux du visiteur :
 | --- | --- |
 | « Peu de dépendances » | zéro dépendance à l'exécution ; 39 Ko gzip de code (HTML + CSS + JS), plus 160 Ko de polices auto-hébergées |
 | « Rien n'est envoyé nulle part » | aucune requête vers un tiers — polices auto-hébergées, aucun traceur, aucun cookie ; un test échoue si un hôte externe est contacté |
-| « Les garanties se prouvent » | 47 tests unitaires + 31 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
+| « Les garanties se prouvent » | 49 tests unitaires + 31 vérifications navigateur, en CI — dont le responsive, le contraste et l'indexation, mesurés plutôt qu'affirmés |
 | « La clarté est une fonctionnalité » | un seul fichier de données, dont la page, le terminal, la palette et le CV imprimé dérivent |
 
 ## Démarrer
@@ -170,7 +170,7 @@ src/js/effects.js       révélation au défilement + easter egg
 src/styles/main.css     design system « la coupe »
 scripts/fetch-fonts.mjs auto-hébergement des polices
 scripts/build-sitemap.mjs sitemap.xml + robots.txt, dérivés des routes
-tests/                  47 tests node:test — logique pure
+tests/                  49 tests node:test — logique pure
 tests-e2e/browser.mjs   31 vérifications navigateur
 ```
 
@@ -342,10 +342,25 @@ réelles : configure le repli SPA vers `index.html`.
 | Hébergeur | À faire |
 | --- | --- |
 | Netlify | `/* /index.html 200` dans `_redirects` |
-| Vercel | rewrite `/(.*)` → `/index.html` |
+| Vercel | `vercel.json`, déjà dans le dépôt |
 | Cloudflare Pages | automatique |
 | nginx | `try_files $uri $uri/ /index.html;` |
 | GitHub Pages | copier `index.html` en `404.html` |
+
+Le repli ne doit pas avaler les fichiers servis tels quels — la preuve de
+propriété Google, `sitemap.xml`, `robots.txt`, les polices, les assets. D'où
+la négation sur l'extension dans `vercel.json`, et deux tests qui l'éprouvent
+hors ligne : l'un vérifie que chaque route réelle est bien réécrite, l'autre
+qu'aucun de ces fichiers ne l'est.
+
+> ⚠️ **`vercel.json` est du JSON : il n'accepte aucun commentaire.** Le schéma
+> de Vercel est *fermé* — une seule propriété inconnue fait échouer le
+> déploiement entier, et le dépôt n'en montre rien : le site en ligne reste
+> simplement figé sur une version ancienne. C'est arrivé ici, une clé
+> `comment` glissée dans la règle de réécriture, et plusieurs jours de
+> déploiements silencieusement refusés. Le premier test de
+> `tests/deploy.test.mjs` existe pour ça, et la justification de la règle vit
+> dans son en-tête, là où les commentaires sont légaux.
 
 ## Licence
 
